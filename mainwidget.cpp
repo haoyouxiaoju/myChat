@@ -20,6 +20,9 @@ void MainWidget::initUi()
 {
     this->setWindowTitle("我的聊天室");
     this->setWindowIcon(QIcon(":/resource/images/xiaoju.jpg"));
+    //去除标题栏   
+    //this->setWindowFlags(Qt::FramelessWindowHint );
+
 
 
     initMainWidget();
@@ -48,7 +51,7 @@ void MainWidget::initMainWidget()
     mainWidgetMid->setFixedWidth(200);
     mainWidgetRight->setMinimumWidth(700);
 
-    mainWidgetLeft->setStyleSheet("background-color:rgb(45,45,45);");
+    mainWidgetLeft->setStyleSheet("QWidget{background-color:rgb(45,45,45);} QPushButton{border-radius:5px;border:none;background-color:transparent;}");
     mainWidgetMid->setStyleSheet("background-color:rgb(247,247,247);");
     mainWidgetRight->setStyleSheet("background-color:rgb(245,245,245);");
 
@@ -78,24 +81,22 @@ void MainWidget::initMainWidgetLeft()
     sessionTabBtn = new QPushButton();
     sessionTabBtn->setFixedSize(45,45);
     sessionTabBtn->setIconSize(QSize(35,35));
-    sessionTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+    sessionTabBtn->setIcon(QIcon(":/resource/images/duihua_action.png"));
     vBoxLayout->addWidget(sessionTabBtn,1,Qt::AlignTop | Qt::AlignCenter);
 
     //好友列表按钮初始化
     friendTabBtn = new QPushButton();
     friendTabBtn->setFixedSize(45,45);
     friendTabBtn->setIconSize(QSize(35,35));
-    friendTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+    friendTabBtn->setIcon(QIcon(":/resource/images/haoyou.png"));
     vBoxLayout->addWidget(friendTabBtn,1,Qt::AlignTop | Qt::AlignCenter);
 
     //好友申请列表初始化
     applyTabBtn = new QPushButton();
     applyTabBtn->setFixedSize(45,45);
     applyTabBtn->setIconSize(QSize(35,35));
-    applyTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+    applyTabBtn->setIcon(QIcon(":/resource/images/tianjiahaoyou.png"));
     vBoxLayout->addWidget(applyTabBtn,1,Qt::AlignTop | Qt::AlignCenter);
-
-    applyTabBtn->setStyleSheet("QPushButton{background-color:transparent;}");
     vBoxLayout->addStretch(20);//空白
 }
 
@@ -105,19 +106,21 @@ void MainWidget::initMainWidgetMid()
     gridLayout->setHorizontalSpacing(0);
     gridLayout->setVerticalSpacing(5);
     gridLayout->setContentsMargins(0,5,0,0);
+    gridLayout->setAlignment(Qt::AlignHCenter | Qt::AlignCenter);
     mainWidgetMid->setLayout(gridLayout);
 
-    //空白占位
+    ////空白占位
     QWidget* widget1= new QWidget();
     widget1->setFixedWidth(10);
     QWidget* widget2= new QWidget();
-    widget1->setFixedWidth(10);
+    widget2->setFixedWidth(10);
     QWidget* widget3= new QWidget();
-    widget1->setFixedWidth(10);
+    widget3->setFixedWidth(10);
 
     // 搜索按钮和输入框
     search_input = new QTextEdit();
     search_input->setFixedHeight(30);
+    search_input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     search_input->setPlaceholderText("搜索");
     search_input->setStyleSheet("QTextEdit {border-radius:5px; padding-left:5px; background-color:rgb(226,226,226); } ");
     gridLayout->addWidget(widget1,0,0);
@@ -125,11 +128,10 @@ void MainWidget::initMainWidgetMid()
     gridLayout->addWidget(widget2,0,2);
 
     search_submit = new QPushButton();
-    search_submit->setFixedSize(30,30);
+    search_submit->setFixedSize(25,25);
     search_submit->setIconSize(QSize(25,25));
-    search_submit->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
-    search_submit->setStyleSheet("QTextEdit {border-radius:5px;background-color:rgb(226,226,226)}"
-                                 " QPushButton:pressed{background-color:rgb(240,240,240)} ");
+    search_submit->setIcon(QIcon(":/resource/images/sousuo.png"));
+    search_submit->setStyleSheet("QPushButton {border-radius:5px;background-color:rgb(226,226,226);border:none;}QPushButton:pressed{background-color:rgb(240,240,240); }");
     gridLayout->addWidget(search_submit,0,3);
     gridLayout->addWidget(widget3,0,4);
 
@@ -206,6 +208,16 @@ void MainWidget::initMainWidgetSignal()
     connect(friendTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabFriend);
     //好友申请列表信号绑定
     connect(applyTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabApply);
+    //点击个人头像 显示个人信息
+    connect(userAvatar, &QPushButton::clicked, this, [this]() {
+        usrInfoWidget* userInfo = new usrInfoWidget();
+        //OtherUsrInfoWidget* userInfo = new OtherUsrInfoWidget();
+        int x=this->mapFromGlobal(QCursor().pos()).x();
+        int y = this->mapFromGlobal(QCursor().pos()).y();
+        qDebug() << x <<"|" << y;
+        userInfo->move(x+this->x(), y+this->y());
+        userInfo->exec();
+        });
 
 }
 
@@ -214,31 +226,32 @@ void MainWidget::changeTabIconAction(MainWidget::ActiveTab& activeTab,MainWidget
     // 失去焦点设置
     switch(activeTab){
     case MainWidget::SESSION_LIST:
-        sessionTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        sessionTabBtn->setIcon(QIcon(":/resource/images/duihua.png"));
         break;
     case MainWidget::FRIEND_LIST:
-        friendTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        friendTabBtn->setIcon(QIcon(":/resource/images/haoyou.png"));
         break;
     case MainWidget::APPLY_LIST:
-        applyTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        applyTabBtn->setIcon(QIcon(":/resource/images/tianjiahaoyou.png"));
         break;
     default:
-        sessionTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
-        friendTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
-        applyTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        sessionTabBtn->setIcon(QIcon(":/resource/images/duihua.png"));
+        friendTabBtn->setIcon(QIcon(":/resource/images/haoyou.png"));
+        applyTabBtn->setIcon(QIcon(":/resource/images/tianjiahaoyou.png"));
     }
 
     //获取焦点设置
     switch(tab){
     case MainWidget::SESSION_LIST:
-        sessionTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        sessionTabBtn->setIcon(QIcon(":/resource/images/duihua_action.png"));
         break;
     case MainWidget::FRIEND_LIST:
-        friendTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        friendTabBtn->setIcon(QIcon(":/resource/images/haoyou_action.png"));
         break;
     case MainWidget::APPLY_LIST:
-        applyTabBtn->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+        applyTabBtn->setIcon(QIcon(":/resource/images/tianjiahaoyou_action.png"));
         break;
+
     default:
         break;
     }
@@ -293,3 +306,4 @@ void MainWidget::loadApplyList()
 {
 
 }
+

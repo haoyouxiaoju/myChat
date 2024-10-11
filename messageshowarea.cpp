@@ -15,12 +15,13 @@ MessageShowArea::MessageShowArea(QWidget * parent):
 
     this->setWidgetResizable(true);
     this->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
-    this->verticalScrollBar()->setStyleSheet("QScrollBar:vertrical{ width:1px;background-color:rgb(240,240,240); } \
+    this->verticalScrollBar()->setStyleSheet("QScrollBar:vertical{ width:2px;background-color:rgb(240,240,240); } \
     QScrollBar::handle:vertical{background-color:rgb(46,46,46)}");
     this->horizontalScrollBar()->setStyleSheet("QScrollBar:horizontal{height:0px}");
     this->setStyleSheet("QScrollArea{border:none}");
     this->setWidget(container);
 
+    //debug
     model::Message message;
     model::UserInfo user;
     user.userId = "1";

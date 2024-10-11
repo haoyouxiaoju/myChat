@@ -11,6 +11,8 @@
 #include "sessionfriendarea.h"
 #include "messageshowarea.h"
 #include "messageeditarea.h"
+#include "usrinfowidget.h"
+#include "otherusrinfowidget.h"
 
 
 class MainWidget : public QWidget
@@ -50,6 +52,7 @@ private:
     void loadSessionList();
     void loadFriendList();
     void loadApplyList();
+protected:
 
 private:
     QWidget* mainWidgetLeft;
@@ -69,7 +72,7 @@ private:
     QPushButton* search_submit;			//搜索按钮
     SessionFriendArea* session_friendArea;
 
-    //mainWidgetRight
-    QLabel* sessionName;				//显示会话名称
+	//mainWidgetRight
+	QLabel* sessionName;				//显示会话名称
 };
 #endif // MAINWIDGET_H
