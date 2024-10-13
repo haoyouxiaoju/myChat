@@ -1,21 +1,25 @@
 ﻿#pragma once
 
 #include <QWidget>
+#include "model/data.h"
+#include <QLineEdit>
+#include <QLabel>
 #include <QDialog>
 #include <QPushButton>
-#include <QLabel>
-#include <QLineEdit>
 #include <QGridLayout>
-#include <QDialog>
+#include <QApplication>
+#include <QEvent>
 
-
+// 未设置Qt::WA_DeleteOnClose 只能在栈上创建，不能通过new的方式创建，否则会内存泄漏。
 class OtherUsrInfoWidget : public QDialog
 {
 	Q_OBJECT
 
 public:
-	OtherUsrInfoWidget(QWidget *parent = nullptr);
+	OtherUsrInfoWidget(const model::UserInfo& usrInfo,QWidget *parent = nullptr);
 	~OtherUsrInfoWidget();
+
+protected:
 
 private:
 	QPushButton* avatar;

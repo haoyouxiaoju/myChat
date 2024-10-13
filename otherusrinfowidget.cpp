@@ -1,15 +1,16 @@
 ﻿#include "otherusrinfowidget.h"
 
-OtherUsrInfoWidget::OtherUsrInfoWidget(QWidget *parent)
+OtherUsrInfoWidget::OtherUsrInfoWidget(const model::UserInfo& usrInfo,QWidget *parent)
 	: QDialog(parent)
 {
 	layout = new QGridLayout();
 	layout->setSpacing(0);
-	layout->setContentsMargins(15, 0, 15, 0);
+	layout->setContentsMargins(15, 15, 15, 15);
 	layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 	this->setLayout(layout);
 	this->setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
-
+	// 设置Qt::WA_DeleteOnClose 的话OtherUsrInfoWidget只能通过new的方式创建，在栈上创建会发生释放块错误。
+	//this->setAttribute(Qt::WA_DeleteOnClose);
     this->setMinimumSize(200, 100);
 	//this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setStyleSheet("QPushButton{ border-radius:5px;background-color:transparent;border:1px solid rgb(164, 164, 164)}\
@@ -51,19 +52,24 @@ OtherUsrInfoWidget::OtherUsrInfoWidget(QWidget *parent)
 	layout->addWidget(deleteFriend_button, 3, 4,1,2);
 
 
-	//debug
-	avatar->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
-	id_label->setText("123");
-	usrName_label->setText("haoyouxiaoju");
-	phone_label->setText("10000000000");
+	// init Text
+	avatar->setIcon(usrInfo.avatar);
+	id_label->setText(usrInfo.userId);
+	usrName_label->setText(usrInfo.nickname);
+	phone_label->setText(usrInfo.phone);
 
 	id_label->setReadOnly(true);
 	usrName_label->setReadOnly(true);
 	phone_label->setReadOnly(true);
-	//debug-end
+	//init_end
 
 
 }
 
 OtherUsrInfoWidget::~OtherUsrInfoWidget()
-{}
+{
+	LOG() << "close";
+}
+
+
+

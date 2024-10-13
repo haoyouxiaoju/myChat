@@ -3,12 +3,12 @@
 
 #include <QWidget>
 #include <QPlainTextEdit>
-#include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QScrollBar>
+#include <QLabel>
 
 
 class MessageEditArea : public QWidget

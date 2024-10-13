@@ -21,21 +21,22 @@ MessageShowArea::MessageShowArea(QWidget * parent):
     this->setStyleSheet("QScrollArea{border:none}");
     this->setWidget(container);
 
-    //debug
-    model::Message message;
-    model::UserInfo user;
-    user.userId = "1";
-    user.nickname = "haoyouxiaoju";
-    user.description = "";
-    user.phone = "";
-    user.avatar = QIcon(":/resource/images/xiaoju.jpg");
-    message = model::Message::MakeMessage(model::TEXT_TYPE, "", user, "好好好好好好好好好好好友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊好好好好好好好好好友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊", "");
+	//debug
 
 
-    for (int i = 0; i < 20; ++i) {
-        addItem(true, message);
-        addItem(false, message);
-    }
+	for (int i = 0; i < 20; ++i) {
+		model::Message message;
+		model::UserInfo user;
+		user.userId = QString::number(i);
+		user.nickname = "haoyouxiaoju";
+		user.description = "";
+		user.phone = "";
+		user.avatar = QIcon(":/resource/images/xiaoju.jpg");
+		message = model::Message::MakeMessage(model::TEXT_TYPE, "", user, "好好好好好好好好好好好友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊好好好好好好好好好友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊友小菊", "");
+
+		addItem(true, message);
+		addItem(false, message);
+	}
 
 }
 
@@ -121,9 +122,18 @@ MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Mess
 
     if(isLeft){
         gridLayout->addWidget(messageStruct,1,1);
+		
     }else{
         gridLayout->addWidget(messageStruct,1,0);
     }
+	connect(avatar_Button, &QPushButton::clicked, item, [item, message]() {
+		OtherUsrInfoWidget userInfo(message.sender);
+		QPoint globalPos = QCursor::pos();
+		userInfo.move(globalPos.x(), globalPos.y());
+		userInfo.exec();
+
+		});
+
 
 
     return item;

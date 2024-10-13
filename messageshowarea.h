@@ -13,6 +13,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include "model/data.h"
+#include "otherusrinfowidget.h"
 
 
 

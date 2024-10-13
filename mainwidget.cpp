@@ -210,14 +210,12 @@ void MainWidget::initMainWidgetSignal()
     connect(applyTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabApply);
     //点击个人头像 显示个人信息
     connect(userAvatar, &QPushButton::clicked, this, [this]() {
-        usrInfoWidget* userInfo = new usrInfoWidget();
-        //OtherUsrInfoWidget* userInfo = new OtherUsrInfoWidget();
-        int x=this->mapFromGlobal(QCursor().pos()).x();
-        int y = this->mapFromGlobal(QCursor().pos()).y();
-        qDebug() << x <<"|" << y;
-        userInfo->move(x+this->x(), y+this->y());
-        userInfo->exec();
-        });
+		usrInfoWidget userInfo;
+		QPoint globalPos = QCursor::pos();
+		userInfo.move(globalPos.x(), globalPos.y());
+		userInfo.exec();
+
+     });
 
 }
 
