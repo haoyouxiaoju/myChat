@@ -21,7 +21,8 @@ void MainWidget::initUi()
     this->setWindowTitle("我的聊天室");
     this->setWindowIcon(QIcon(":/resource/images/xiaoju.jpg"));
     //去除标题栏   
-    //this->setWindowFlags(Qt::FramelessWindowHint );
+    this->setWindowFlags(Qt::FramelessWindowHint );
+
 
 
 
@@ -37,11 +38,12 @@ void MainWidget::initUi()
 // 初始化主页面
 void MainWidget::initMainWidget()
 {
-    QHBoxLayout* mainLayout = new QHBoxLayout();
+    QHBoxLayout*  mainLayout = new QHBoxLayout();
     mainLayout->setSpacing(0);
     mainLayout->setContentsMargins(0,0,0,0);
     this->setLayout(mainLayout);
     this->setMinimumHeight(600);
+    
 
     mainWidgetLeft = new QWidget();
     mainWidgetMid = new QWidget();
@@ -50,6 +52,7 @@ void MainWidget::initMainWidget()
     mainWidgetLeft->setFixedWidth(60);
     mainWidgetMid->setFixedWidth(200);
     mainWidgetRight->setMinimumWidth(700);
+    mainWidgetRight->setWindowFlags(Qt::WindowStaysOnTopHint);
 
     mainWidgetLeft->setStyleSheet("QWidget{background-color:rgb(45,45,45);} QPushButton{border-radius:5px;border:none;background-color:transparent;}");
     mainWidgetMid->setStyleSheet("background-color:rgb(247,247,247);");
@@ -172,7 +175,7 @@ void MainWidget::initMainWidgetRight()
     topWidgetLayout->addWidget(sessionName,0,Qt::AlignLeft);
 
     // 更多按钮
-    QPushButton* more_Button = new QPushButton();
+    more_Button = new QPushButton();
     more_Button->resize(QSize(30,30));
     more_Button->setIconSize(QSize(30,30));
     more_Button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
@@ -214,6 +217,22 @@ void MainWidget::initMainWidgetSignal()
 		QPoint globalPos = QCursor::pos();
 		userInfo.move(globalPos.x(), globalPos.y());
 		userInfo.exec();
+
+     });
+
+    connect(more_Button, &QPushButton::clicked, this, [this]() {
+        SessionDetailsWidget* widget = new SessionDetailsWidget((model::ChatSessionInfo()),this);
+        //this->layout()->addWidget(widget);
+        widget->show();
+        widget->move(QPoint(this->x()+this->width(), this->y()));
+       /* QPropertyAnimation* anim = new QPropertyAnimation(widget,"pos",widget);
+        anim->setEasingCurve(QEasingCurve::InOutCirc);
+        anim->setDuration(1000);
+        anim->setStartValue(QPoint(this->x()+this->width()-widget->width(), this->y()));
+        anim->setEndValue(QPoint(this->x()+this->width(), this->y()));
+        
+       anim->start();*/
+
 
      });
 

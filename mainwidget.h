@@ -8,11 +8,13 @@
 #include <QGridLayout>
 #include <QTextEdit>
 #include <QFont>
+#include <QPropertyAnimation>
 #include "sessionfriendarea.h"
 #include "messageshowarea.h"
 #include "messageeditarea.h"
 #include "usrinfowidget.h"
 #include "otherusrinfowidget.h"
+#include "sessiondetailswidget.h"
 
 
 class MainWidget : public QWidget
@@ -60,7 +62,7 @@ private:
     QWidget* mainWidgetRight;
 
     ActiveTab activeTab = UN_INIT;
-
+    
     //mainWidgetLeft _
     QPushButton* userAvatar;			//用户头像
     QPushButton* sessionTabBtn;			//会话
@@ -74,5 +76,6 @@ private:
 
 	//mainWidgetRight
 	QLabel* sessionName;				//显示会话名称
+    QPushButton* more_Button;           //更多按钮
 };
 #endif // MAINWIDGET_H

@@ -15,5 +15,8 @@
         <file>resource/images/haoyou_action.png</file>
         <file>resource/images/tianjiahaoyou_action.png</file>
         <file>resource/images/sousuo.png</file>
+        <file>resource/images/plus_sign.png</file>
+        <file>resource/images/left_arrow.png</file>
+        <file>resource/images/right_arrow.png</file>
     </qresource>
 </RCC>
