@@ -18,5 +18,7 @@
         <file>resource/images/plus_sign.png</file>
         <file>resource/images/left_arrow.png</file>
         <file>resource/images/right_arrow.png</file>
+        <file>resource/images/checked.png</file>
+        <file>resource/images/unchecked.png</file>
     </qresource>
 </RCC>

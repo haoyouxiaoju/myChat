@@ -1,7 +1,7 @@
 ﻿#include "sessiondetailswidget.h"
 
 SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& sessionInfo,QWidget *parent)
-	: QWidget(parent),sessionInfo(sessionInfo)
+	: QDialog(parent),sessionInfo(sessionInfo)
 {
 	int thisHeight;
 	if (parent != nullptr) {
@@ -13,6 +13,7 @@ SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& session
 	//widget 的大小设置
 	//
 	this->setFixedHeight(thisHeight);
+	this->setFixedWidth(0);
 
 	this->setAttribute(Qt::WA_DeleteOnClose);
 	this->setWindowFlags(Qt::FramelessWindowHint|Qt::Popup);
@@ -95,23 +96,26 @@ SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& session
 	addAvatarItem(QIcon(":/resource/images/lishijilu.png"), "添加");
 	addAvatarItem(QIcon(":/resource/images/tupian.png"), "添加");
 	addAvatarItem(QIcon(":/resource/images/more.png"), "添加");
-
-	QVariantAnimation* animation = new QVariantAnimation(this);
-	animation->setDuration(300); // 
-    animation->setEasingCurve(QEasingCurve::InOutCirc);
-	animation->setStartValue(0);
-	animation->setEndValue(270);
-	connect(animation, &QVariantAnimation::valueChanged, this, [this](const QVariant& value) {
-		this->setFixedWidth(value.toReal()); // 根据新的宽度调整大小  
+	AvatarItem* item =new AvatarItem(QIcon(":/resource/images/more.png"), "添加");
+	addAvatarItem(item);
+	connect(item->avatar_button, &QPushButton::clicked, this, []() {
+		ChooseFriendDialog* dialog = new ChooseFriendDialog("haoyouxiaoju");
+		dialog->exec();
+		
 		});
-	animation->start();
-
+	
 }
 
 SessionDetailsWidget::~SessionDetailsWidget()
 {
 
 }
+
+//SessionDetailsWidget* SessionDetailsWidget::getWidget(const model::ChatSessionInfo& sessionInfo,QWidget *parent)
+//{	
+//	static SessionDetailsWidget widget(sessionInfo,parent);
+//	return &widget;
+//}
 
 void SessionDetailsWidget::addAvatarItem(const QIcon& icon, const QString& name)
 {
@@ -122,9 +126,58 @@ void SessionDetailsWidget::addAvatarItem(const QIcon& icon, const QString& name)
 	avatarTabel_Layout->addWidget(new AvatarItem(icon, name,this),cur_Row,cur_Col++);
 }
 
+void SessionDetailsWidget::addAvatarItem(AvatarItem* item)
+{
+	if (cur_Col >= Max_Col) {
+		cur_Col = 0;
+		cur_Row++;
+	}
+	avatarTabel_Layout->addWidget(item,cur_Row,cur_Col++);
+}
+
+void SessionDetailsWidget::show_widget()
+{
+	QVariantAnimation* animation = new QVariantAnimation(this);
+	animation->setDuration(300); // 
+	animation->setEasingCurve(QEasingCurve::InOutCirc);
+	animation->setStartValue(0);
+	animation->setEndValue(270);
+	connect(animation, &QVariantAnimation::valueChanged, this, [this](const QVariant& value) {
+		this->setFixedWidth(value.toReal()); // 根据新的宽度调整大小  
+		});
+	this->show();
+	animation->start();
+	
+
+}
+
+void SessionDetailsWidget::hide_widget()
+{
+	QVariantAnimation* animation = new QVariantAnimation(this);
+	animation->setDuration(200); // 
+	animation->setEasingCurve(QEasingCurve::InOutCirc);
+	animation->setStartValue(270);
+	animation->setEndValue(0);
+	connect(animation, &QVariantAnimation::valueChanged, this, [this](const QVariant& value) {
+		this->setFixedWidth(value.toReal()); // 根据新的宽度调整大小  
+		});
+	animation->start();
+	/*QTimer::singleShot(200, [this]() {
+		this->close();
+		LOG() << "close";
+		});*/
+
+}
+
+
 void SessionDetailsWidget::paintEvent(QPaintEvent* event)
 {
 	 
+}
+
+void SessionDetailsWidget::closeEvent(QCloseEvent* event)
+{
+	
 }
 
 AvatarItem::AvatarItem(const QIcon& icon, const QString& name, QWidget* parent)

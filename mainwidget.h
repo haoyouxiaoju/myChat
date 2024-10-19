@@ -77,5 +77,7 @@ private:
 	//mainWidgetRight
 	QLabel* sessionName;				//显示会话名称
     QPushButton* more_Button;           //更多按钮
+    SessionDetailsWidget* sessionDetail_widget;//弹窗
+    //bool isOpen_moreButton;             //是否弹出弹窗
 };
 #endif // MAINWIDGET_H

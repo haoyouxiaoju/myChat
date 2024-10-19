@@ -33,6 +33,7 @@ void MainWidget::initUi()
     initMainWidgetRight();	//会话信息
 
     initMainWidgetSignal();//绑定信号槽
+
 }
 
 // 初始化主页面
@@ -221,10 +222,24 @@ void MainWidget::initMainWidgetSignal()
      });
 
     connect(more_Button, &QPushButton::clicked, this, [this]() {
-        SessionDetailsWidget* widget = new SessionDetailsWidget((model::ChatSessionInfo()),this);
-        //this->layout()->addWidget(widget);
-        widget->show();
-        widget->move(QPoint(this->x()+this->width(), this->y()));
+
+        //sessionDetail_widget = SessionDetailsWidget::getWidget(model::ChatSessionInfo(), this);
+		//if (isOpen_moreButton) {
+  //          LOG() << "TRUE";
+		//	//sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
+		//	sessionDetail_widget->hide_widget();
+		//	//sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
+  //          isOpen_moreButton = false;
+		//}
+		//else {
+            //LOG() << "FALSE";
+			sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
+			//this->layout()->addWidget(sessionDetail_widget);
+			//sessionDetail_widget->show();
+            sessionDetail_widget->show_widget();
+			sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
+			//isOpen_moreButton = true;
+		//}
        /* QPropertyAnimation* anim = new QPropertyAnimation(widget,"pos",widget);
         anim->setEasingCurve(QEasingCurve::InOutCirc);
         anim->setDuration(1000);

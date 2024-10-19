@@ -11,20 +11,27 @@
 #include <QTimer>
 #include <QVariantAnimation>
 #include "model/data.h"
+#include "choosefrienddialog.h"
 
 class AvatarItem;
 
-class SessionDetailsWidget : public QWidget
+class SessionDetailsWidget : public QDialog
 {
 	Q_OBJECT
 public:
 	SessionDetailsWidget(const model::ChatSessionInfo& sessionInfo,QWidget *parent = nullptr);
 	~SessionDetailsWidget();
 
+public:
+	//static SessionDetailsWidget* getWidget(const model::ChatSessionInfo& sessionInfo,QWidget *parent);
 	void addAvatarItem(const QIcon& icon, const QString& name);
+	void addAvatarItem(AvatarItem* item);
+	void show_widget(); 
+	void hide_widget();
 
 protected:
-	void paintEvent(QPaintEvent* event);
+	void paintEvent(QPaintEvent* event) override;
+	void closeEvent(QCloseEvent* event) override;
 
 private:
 	QVBoxLayout* layout;				//主layout
@@ -46,7 +53,7 @@ public:
 
 
 
-private:
+public:
 	QPushButton* avatar_button;
 	QLabel* name_label;
 };
