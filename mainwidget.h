@@ -15,9 +15,11 @@
 #include "usrinfowidget.h"
 #include "otherusrinfowidget.h"
 #include "sessiondetailswidget.h"
+#include "groupsessiondetailwidget.h"
+#include "framelesswidget.h"
 
 
-class MainWidget : public QWidget
+class MainWidget : public FramelessWidget
 {
     Q_OBJECT
 private:

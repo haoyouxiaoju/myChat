@@ -86,6 +86,17 @@ void ChooseFriendDialog::deleteSelectedFriend(const QString& userId)
 	
 }
 
+// 确认键 slot
+void ChooseFriendDialog::OK_Slot() {
+
+	this->hide();
+}
+// 取消键 slot
+void ChooseFriendDialog::Cannot_Slot()
+{
+	this->hide();
+}
+
 // 初始化左边
 void ChooseFriendDialog::initLeftWidget()
 {
@@ -164,12 +175,14 @@ void ChooseFriendDialog::initRightWidget()
 	OK_button->setFixedSize(110, 30);
 	OK_button->setStyleSheet("QPushButton{background-color:rgb(235, 235, 235);color:rgb(161, 161, 161);border:none;border-radius:5px;}");
 	right_widget_layout->addWidget(OK_button, 2, 1, 1, 3);
+	connect(OK_button, &QPushButton::clicked, this, &ChooseFriendDialog::OK_Slot);
 
 	//取消按钮----右
 	QPushButton* cannot_button = new QPushButton("取消");
 	cannot_button->setFixedSize(110, 30);
 	cannot_button->setStyleSheet("QPushButton{background-color:rgb(243, 243, 243);color:rgb(15, 194, 101);border:none;border-radius:5px;}");
 	right_widget_layout->addWidget(cannot_button, 2, 5, 1, 3);
+	connect(cannot_button, &QPushButton::clicked, this, &ChooseFriendDialog::Cannot_Slot);
 
 
  

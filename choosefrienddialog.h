@@ -27,6 +27,11 @@ public:
 	void addSelectedFriend(const QString& userId, const QIcon& avatar, const QString& name);		//右边选中列表添加item
 	void deleteSelectedFriend(const QString& userId);												//删除选中列表item
 
+public slots:
+	void OK_Slot();
+	void Cannot_Slot();
+
+
 private:
 	void initLeftWidget();		//初始化左边界面
 	void initRightWidget();		//初始化右边界面

@@ -31,6 +31,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         otherusrinfowidget.h otherusrinfowidget.cpp
         sessiondetailswidget.h sessiondetailswidget.cpp
         choosefrienddialog.h choosefrienddialog.cpp
+        groupsessiondetailwidget.h groupsessiondetailwidget.cpp
+        framelesswidget.h framelesswidget.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

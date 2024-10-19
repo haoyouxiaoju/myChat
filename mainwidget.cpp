@@ -1,7 +1,7 @@
 #include "mainwidget.h"
 
 MainWidget::MainWidget(QWidget *parent)
-    : QWidget(parent)
+    : FramelessWidget(parent)
 {
     initUi();
 }
@@ -18,10 +18,10 @@ MainWidget::~MainWidget() {}
 //	用于初始化界面
 void MainWidget::initUi()
 {
-    this->setWindowTitle("我的聊天室");
-    this->setWindowIcon(QIcon(":/resource/images/xiaoju.jpg"));
+    //this->setWindowTitle("我的聊天室");
+    //this->setWindowIcon(QIcon(":/resource/images/xiaoju.jpg"));
     //去除标题栏   
-    this->setWindowFlags(Qt::FramelessWindowHint );
+    //this->setWindowFlags(Qt::FramelessWindowHint );
 
 
 
@@ -223,30 +223,13 @@ void MainWidget::initMainWidgetSignal()
 
     connect(more_Button, &QPushButton::clicked, this, [this]() {
 
-        //sessionDetail_widget = SessionDetailsWidget::getWidget(model::ChatSessionInfo(), this);
-		//if (isOpen_moreButton) {
-  //          LOG() << "TRUE";
-		//	//sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
-		//	sessionDetail_widget->hide_widget();
-		//	//sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
-  //          isOpen_moreButton = false;
-		//}
-		//else {
-            //LOG() << "FALSE";
-			sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
-			//this->layout()->addWidget(sessionDetail_widget);
-			//sessionDetail_widget->show();
+		sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
+		sessionDetail_widget->show_widget();
+		sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
+
+	/*	GroupSessionDetailWidget* sessionDetail_widget = new GroupSessionDetailWidget( this);
             sessionDetail_widget->show_widget();
-			sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
-			//isOpen_moreButton = true;
-		//}
-       /* QPropertyAnimation* anim = new QPropertyAnimation(widget,"pos",widget);
-        anim->setEasingCurve(QEasingCurve::InOutCirc);
-        anim->setDuration(1000);
-        anim->setStartValue(QPoint(this->x()+this->width()-widget->width(), this->y()));
-        anim->setEndValue(QPoint(this->x()+this->width(), this->y()));
-        
-       anim->start();*/
+			sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));*/
 
 
      });
