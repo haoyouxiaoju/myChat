@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "userInfo.proto";
+
+enum MessageType{
+    TEXT_TYPE =1;
+    IMGAE_TYPE=2;
+    FILE_TYPE=3;
+    SPEECH_TYPE=4;
+}
+
+message Message {
+    string message_id=1;
+    string chat_sessionId=2;
+    string time=3;
+    MessageType type =4;
+    userInfo sender = 5;
+    bytes content=6;
+    optional string fileId=7;
+    optional string fileName=8;
+
+
+    
+}

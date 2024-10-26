@@ -10,7 +10,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Protobuf)
+
+
+file(GLOB PB_FILES "./proto/*.proto")
 
 set(PROJECT_SOURCES
         main.cpp
@@ -35,6 +38,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         framelesswidget.h framelesswidget.cpp
 
     )
+qt_add_protobuf(ChatClient PROTO_FILES ${PB_FILES})
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ChatClient APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
