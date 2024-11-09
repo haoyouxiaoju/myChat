@@ -20,5 +20,8 @@
         <file>resource/images/right_arrow.png</file>
         <file>resource/images/checked.png</file>
         <file>resource/images/unchecked.png</file>
+        <file>resource/images/close.png</file>
+        <file>resource/images/maximize.png</file>
+        <file>resource/images/minimize.png</file>
     </qresource>
 </RCC>

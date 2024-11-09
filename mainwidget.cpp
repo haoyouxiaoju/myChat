@@ -44,7 +44,7 @@ void MainWidget::initMainWidget()
     mainLayout->setContentsMargins(0,0,0,0);
     this->setLayout(mainLayout);
     this->setMinimumHeight(600);
-    
+    this->setMinimumWidth(1000);
 
     mainWidgetLeft = new QWidget();
     mainWidgetMid = new QWidget();
@@ -156,11 +156,11 @@ void MainWidget::initMainWidgetRight()
 
     //	存放会话名称和更多信息按钮
     QWidget* topWidget = new QWidget();
-    topWidget->setFixedHeight(40);
+    topWidget->setFixedHeight(75);
     topWidget->setStyleSheet("QWidget { border-bottom:1px solid rgb(231,231,231);border-left:1px solid rgb(231,231,231); }");
 
     //
-    QHBoxLayout* topWidgetLayout = new QHBoxLayout();
+    QGridLayout* topWidgetLayout = new QGridLayout();
     topWidgetLayout->setSpacing(0);
     topWidgetLayout->setContentsMargins(10,0,10,0);
     topWidget->setLayout(topWidgetLayout);
@@ -172,17 +172,46 @@ void MainWidget::initMainWidgetRight()
     big_font.setWeight(QFont::Bold);
     sessionName->setFont(big_font);
     sessionName->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    sessionName->setStyleSheet("QWidget {border-left: none }");
-    topWidgetLayout->addWidget(sessionName,0,Qt::AlignLeft);
+    sessionName->setStyleSheet("QWidget {border: none }");
+    topWidgetLayout->addWidget(sessionName,0,0,2,2);
 
+    //最小化
+    minimize_button = new QPushButton();
+    minimize_button->setFixedSize(QSize(30,30));
+    minimize_button->setIconSize(QSize(15,15));
+    minimize_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+    minimize_button->setIcon(QIcon(":/resource/images/minimize.png"));
+    minimize_button->setStyleSheet("QPushButton { border: none ; background-color:transparent ;}");
+    topWidgetLayout->addWidget(minimize_button,0,13,1,1);
+    
+    //最大化
+    maximize_button = new QPushButton();
+    maximize_button->setFixedSize(QSize(30,30));
+    maximize_button->setIconSize(QSize(15,15));
+    maximize_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+    maximize_button->setIcon(QIcon(":/resource/images/maximize.png"));
+    maximize_button->setStyleSheet("QPushButton { border: none ; background-color:transparent ;}");
+    topWidgetLayout->addWidget(maximize_button,0,14,1,1);
+
+
+    //关闭
+    closeMainWidget_button = new QPushButton();
+    closeMainWidget_button->setFixedSize(QSize(30,30));
+    closeMainWidget_button->setIconSize(QSize(15,15));
+    closeMainWidget_button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+    closeMainWidget_button->setIcon(QIcon(":/resource/images/close.png"));
+    closeMainWidget_button->setStyleSheet("QPushButton { border: none ; background-color:transparent ;}");
+    topWidgetLayout->addWidget(closeMainWidget_button,0,15,1,1);
+    
+    
     // 更多按钮
     more_Button = new QPushButton();
-    more_Button->resize(QSize(30,30));
-    more_Button->setIconSize(QSize(30,30));
+    more_Button->setFixedSize(QSize(30,30));
+    more_Button->setIconSize(QSize(20,20));
     more_Button->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
     more_Button->setIcon(QIcon(":/resource/images/more.png"));
     more_Button->setStyleSheet("QPushButton { border: none ; background-color:transparent ;}");
-    topWidgetLayout->addWidget(more_Button,0,Qt::AlignRight);
+    topWidgetLayout->addWidget(more_Button,1,15,1,1);
 
     vBoxLayout->addWidget(topWidget,0,Qt::AlignTop);
 
@@ -221,6 +250,28 @@ void MainWidget::initMainWidgetSignal()
 
      });
 
+
+    //最小化
+    connect(minimize_button, &QPushButton::clicked, this, [this]() {
+
+        });
+
+
+    
+    //最大化
+    connect(maximize_button, &QPushButton::clicked, this, [this]() {
+
+        });
+
+
+
+    //关闭
+    connect(closeMainWidget_button, &QPushButton::clicked, this, [this]() {
+        this->close();
+        });
+
+
+    //更多
     connect(more_Button, &QPushButton::clicked, this, [this]() {
 
 		sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);

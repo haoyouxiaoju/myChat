@@ -48,29 +48,11 @@
           "checksum": "cJwDh7lFWFs2BIhTE0eAFPaAQ+I="
         }
       }
-    },
-    {
-      "hidden": true,
-      "name": "5.14.2_winrt_x64_msvc2017",
-      "inherits": "Qt",
-      "environment": {
-        "QTDIR": "D:/Programs/qtCreator/5.14.2/winrt_x64_msvc2017"
-      },
-      "architecture": {
-        "strategy": "external",
-        "value": "x64"
-      },
-      "generator": "Ninja",
-      "vendor": {
-        "qt-project.org/Version": {
-          "checksum": "yFnQ30UyzR5RPzL/7U1rmKeG3Lg="
-        }
-      }
     }
   ],
   "vendor": {
     "qt-project.org/Presets": {
-      "checksum": "M7WFv6k8OBrDL7/TG9H82Mg2dmo="
+      "checksum": "Ec1h2o1/zm+hJNlox8udK5CxK7U="
     }
   }
 }

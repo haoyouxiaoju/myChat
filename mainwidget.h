@@ -78,6 +78,9 @@ private:
 
 	//mainWidgetRight
 	QLabel* sessionName;				//显示会话名称
+    QPushButton* minimize_button;       //控制mainWidget最小化
+    QPushButton* maximize_button;       //控制mainWidget最大化
+    QPushButton* closeMainWidget_button;//控制mainWidget关闭
     QPushButton* more_Button;           //更多按钮
     SessionDetailsWidget* sessionDetail_widget;//弹窗
     //bool isOpen_moreButton;             //是否弹出弹窗
