@@ -11,7 +11,8 @@ ChooseFriendDialog::ChooseFriendDialog(const QString& usrId,QWidget *parent)
 	layout->setContentsMargins(0, 0, 0, 0);
 
 	this->setFixedSize(600, 440);
-	this->setWindowFlags(Qt::WindowCloseButtonHint | Qt::Popup);
+	this->setWindowFlags(Qt::WindowCloseButtonHint );
+	this->setWindowFlags(Qt::FramelessWindowHint);
 	this->setAttribute(Qt::WA_DeleteOnClose);
 	this->setLayout(layout);
 

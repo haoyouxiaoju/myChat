@@ -26,6 +26,11 @@ public:
 public:
 	FramelessWidget(QWidget* parent = nullptr);
 	~FramelessWidget();
+	
+	
+	void setBorderColor(const QColor& color);
+
+
 protected:
 	bool event(QEvent* event) override;
 	void leaveEvent(QEvent* event) override;
@@ -38,8 +43,10 @@ protected:
 	void resizeRegion(int marginTop, int marginBottom, int marginLeft, int marginRight);
 	void createShadow();
 	void maximizeWidget();
+	void minimizeWidget();
 	void restoreWidget();
-
+	
+	void setMoveStatus(bool status);
 
     void paintEvent(QPaintEvent* event) override;
 
@@ -47,6 +54,7 @@ private:
 	bool m_bIsPressed;		//是否鼠标按下
 	bool m_bIsResizing;		//是否要拉伸
 	bool m_bIsDoublePressed;//没用到
+	bool m_bIsMove;
 	QPoint m_pressPoint;	//鼠标按下时的坐标
 	QPoint m_pressPoint_initial;//没用到
 	QPoint m_movePoint;		//鼠标移动了的相对坐标
@@ -54,7 +62,6 @@ private:
 
 
 	QRect rect;				//用于存放geometry
-	QPoint borderPosition;
 	TransparentBorder* border;
 
 };
@@ -69,6 +76,7 @@ public:
 	void moveBorder(const QPoint& movePoint);
 
 	void setParentRect(const QRect& rect);
+	void setBorderColor(const QColor& color);
 protected:
 
 	void paintEvent(QPaintEvent* event) override;
@@ -76,4 +84,5 @@ protected:
 private:
 	QPoint marginOrigin;
 	QRect parentRect;
+	QColor borderColor;
 };

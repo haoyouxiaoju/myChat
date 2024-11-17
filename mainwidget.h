@@ -57,7 +57,7 @@ private:
     void loadFriendList();
     void loadApplyList();
 protected:
-
+    void mousePressEvent(QMouseEvent* event) override;
 private:
     QWidget* mainWidgetLeft;
     QWidget* mainWidgetMid;
@@ -77,9 +77,11 @@ private:
     SessionFriendArea* session_friendArea;
 
 	//mainWidgetRight
+    QWidget* topWidget;
 	QLabel* sessionName;				//显示会话名称
     QPushButton* minimize_button;       //控制mainWidget最小化
     QPushButton* maximize_button;       //控制mainWidget最大化
+    bool maximize_button_status;
     QPushButton* closeMainWidget_button;//控制mainWidget关闭
     QPushButton* more_Button;           //更多按钮
     SessionDetailsWidget* sessionDetail_widget;//弹窗

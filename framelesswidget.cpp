@@ -11,12 +11,12 @@
 #include "model/data.h"
 
 FramelessWidget::FramelessWidget(QWidget* parent)
-	: QWidget(parent), m_bIsPressed(false), m_bIsResizing(false), m_bIsDoublePressed(false),
+	: QWidget(parent), m_bIsPressed(false), m_bIsResizing(false), m_bIsDoublePressed(false),m_bIsMove(false),
 	m_direction(NONE)
 {
 	setWindowFlags(Qt::FramelessWindowHint);    //隐藏标题栏（无边框）
 	setAttribute(Qt::WA_StyledBackground);      //启用样式背景绘制
-	setAttribute(Qt::WA_TranslucentBackground); //背景透明
+	//setAttribute(Qt::WA_TranslucentBackground); //背景透明
 	setAttribute(Qt::WA_Hover);
 	setAttribute(Qt::WA_StaticContents);
 	this->setMinimumSize(50, 50);
@@ -64,8 +64,11 @@ void FramelessWidget::mousePressEvent(QMouseEvent* event)
 	}
 	//由于使用的是 额外创建一个boder边框使得能够预览窗口的位置
 	// 所以得让boder知道要绑定谁，且知道他的geometry
-	border->setParentRect(geometry());
-	border->show();//显示边框
+	if (m_bIsMove || m_bIsResizing) {
+		border->setParentRect(geometry());
+		border->show();//显示边框
+
+	}
 }
 
 void FramelessWidget::mouseMoveEvent(QMouseEvent* event)
@@ -376,15 +379,15 @@ void FramelessWidget::mouseReleaseEvent(QMouseEvent* event)
     QWidget::mouseReleaseEvent(event);
 	LOG() << m_direction;
 	if (NONE != m_direction) {
-		LOG() << "resize";
+		//LOG() << "resize";
 		resizeRegion(0, 0, 0, 0);
 	}
 	// 鼠标松开，当鼠标按下的状态还没修改
 	//	处于移动窗口的状态
-	if (!m_bIsResizing && m_bIsPressed) {
+	if (!m_bIsResizing && m_bIsPressed && m_bIsMove) {
 		this->move(geometry().x() + m_movePoint.x(), geometry().y() + m_movePoint.y());
 	}
-	
+	this->setMoveStatus(false);
 	//LOG() << "1:" << geometry();
 
 	// 修改鼠标的样式
@@ -429,10 +432,24 @@ void FramelessWidget::maximizeWidget()
   
     showMaximized();
 }
+void FramelessWidget::minimizeWidget()
+{
+	showMinimized();
+}
 void FramelessWidget::restoreWidget()
 {
    
     showNormal();
+}
+
+void FramelessWidget::setMoveStatus(bool status)
+{
+	this->m_bIsMove = status;
+}
+
+void FramelessWidget::setBorderColor(const QColor& color)
+{
+	this->border->setBorderColor(color);
 }
 
 
@@ -446,7 +463,7 @@ void FramelessWidget::paintEvent(QPaintEvent* event)
 
 
 TransparentBorder::TransparentBorder():
-	QWidget(),marginOrigin(0,0),parentRect(0,0,0,0)
+	QWidget(),marginOrigin(0,0),parentRect(0,0,0,0),borderColor(Qt::white)
 {
 	setWindowOpacity(1);
 	this->setAttribute(Qt::WA_TranslucentBackground, true);//透明
@@ -501,8 +518,8 @@ void TransparentBorder::resizeBorder(const QPoint& m_movePoint, FramelessWidget:
 		break;
 		case FramelessWidget::Direction::DOWN:
 		{
-			LOG() << "down";
-			LOG() << "parentRect:" << parentRect;
+			//LOG() << "down";
+			//LOG() << "parentRect:" << parentRect;
 			QRect rect(parentRect);
 			rect.setBottom(rect.bottom() + m_movePoint.y());
 			//rect.setHeight(rect.height() + m_movePoint.y());
@@ -552,6 +569,11 @@ void TransparentBorder::setParentRect(const QRect& rect)
 
 }
 
+void TransparentBorder::setBorderColor(const QColor& color)
+{
+	borderColor = color;
+}
+
 // 渲染时画出出边框
 void TransparentBorder::paintEvent(QPaintEvent *event)
 {
@@ -559,7 +581,7 @@ void TransparentBorder::paintEvent(QPaintEvent *event)
 	QRect rect = geometry();
 	QPainter painter(this);
     painter.setBrush(QColor(9,151,247,1));//painter区域全部的背景色
-    painter.setPen(QPen(Qt::white,3,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+    painter.setPen(QPen(borderColor,3,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
     painter.setCompositionMode(QPainter::CompositionMode_Difference);
     painter.drawRect(0,0,rect.width(),rect.height());
 

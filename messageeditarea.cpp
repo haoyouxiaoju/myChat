@@ -1,4 +1,5 @@
 ﻿#include "messageeditarea.h"
+#include "messagehistorywidget.h"
 
 MessageEditArea::MessageEditArea(QWidget *parent)
     : QWidget{parent},owner(parent)
@@ -74,5 +75,12 @@ MessageEditArea::MessageEditArea(QWidget *parent)
 
     tiplabel = new QLabel();
     tiplabel->hide();
+
+
+    connect(showHitstoryBtn, &QPushButton::clicked, this, [this]() {
+        messageHistoryWidget* w  = messageHistoryWidget::getMessageHistoryWidget();
+        w->show();
+
+        });
 
 }

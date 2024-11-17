@@ -16,7 +16,7 @@ GroupSessionDetailWidget::GroupSessionDetailWidget(QWidget *parent)
 	this->setFixedWidth(0);
 
 	this->setAttribute(Qt::WA_DeleteOnClose);
-	this->setWindowFlags(Qt::FramelessWindowHint|Qt::Popup);
+	this->setWindowFlags(Qt::FramelessWindowHint);
 	this->setStyleSheet("QWidget{border-bottom:2px solid rgb(238, 238, 238)} \
 							QLabel{ font-size:17px bold rgb(0,0,0) }");
 

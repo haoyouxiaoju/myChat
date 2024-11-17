@@ -155,7 +155,7 @@ void MainWidget::initMainWidgetRight()
     mainWidgetRight->setLayout(vBoxLayout);
 
     //	存放会话名称和更多信息按钮
-    QWidget* topWidget = new QWidget();
+    topWidget = new QWidget();
     topWidget->setFixedHeight(75);
     topWidget->setStyleSheet("QWidget { border-bottom:1px solid rgb(231,231,231);border-left:1px solid rgb(231,231,231); }");
 
@@ -185,6 +185,7 @@ void MainWidget::initMainWidgetRight()
     topWidgetLayout->addWidget(minimize_button,0,13,1,1);
     
     //最大化
+    maximize_button_status = false;
     maximize_button = new QPushButton();
     maximize_button->setFixedSize(QSize(30,30));
     maximize_button->setIconSize(QSize(15,15));
@@ -253,15 +254,24 @@ void MainWidget::initMainWidgetSignal()
 
     //最小化
     connect(minimize_button, &QPushButton::clicked, this, [this]() {
-
-        });
+            this->minimizeWidget();
+    });
 
 
     
     //最大化
-    connect(maximize_button, &QPushButton::clicked, this, [this]() {
+	connect(maximize_button, &QPushButton::clicked, this, [this]() {
+		if (maximize_button_status) {
+			this->restoreWidget();
+			maximize_button_status = false;
 
-        });
+		}
+		else {
+			this->maximizeWidget();
+			maximize_button_status = true;
+
+		}
+		});
 
 
 
@@ -371,5 +381,19 @@ void MainWidget::loadFriendList()
 void MainWidget::loadApplyList()
 {
 
+}
+
+void MainWidget::mousePressEvent(QMouseEvent* event)
+{
+    int topWidgetHeight = this->topWidget->height();
+    int leftWidgetWidth = this->mainWidgetLeft->width();
+
+    int x = event->x();
+    int y = event->y();
+    if (x <= leftWidgetWidth || y <= topWidgetHeight) {
+        this->setMoveStatus(true);
+    }
+
+    FramelessWidget::mousePressEvent(event);
 }
 
