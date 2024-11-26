@@ -20,9 +20,9 @@ int main(int argc, char *argv[])
     //w->resize(200, 200);
 
     //LoginWidget* w = new LoginWidget();
-    LoginPhoneWidget* w = new LoginPhoneWidget();
+    //LoginPhoneWidget* w = new LoginPhoneWidget();
 
-    w->show();
+    //w->show();
 
     return a.exec();
 }

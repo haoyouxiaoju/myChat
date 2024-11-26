@@ -10,10 +10,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Protobuf)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets NetWork WebSockets Protobuf)
 
 
 file(GLOB PB_FILES "./proto/*.proto")
+
+set(MODEL_FILES
+    model/data.h
+    model/datacenter.h model/datacenter.cpp
+)
+
+set(NETWORK_FILES
+    network/netclient.h network/netclient.cpp
+)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -25,7 +34,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ChatClient
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        model/data.h
+        ${MODEL_FILES}
+        ${NETWORK_FILES}
         local_resource.qrc
         sessionfriendarea.h sessionfriendarea.cpp
         messageshowarea.h messageshowarea.cpp
@@ -38,9 +48,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         framelesswidget.h framelesswidget.cpp
         messagehistorywidget.h messagehistorywidget.cpp
         loginwidget.h loginwidget.cpp
+        toast.h toast.cpp
 
     )
 qt_add_protobuf(ChatClient PROTO_FILES ${PB_FILES})
+
+FILE(GLOB QPB_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.qpb.* )
+FILE(COPY ${QPB_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/proto/qpb/)
+#message(${QPB_FILES})
+
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ChatClient APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -59,7 +75,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(ChatClient PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(ChatClient PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt6::Network Qt6::WebSockets Qt6::Protobuf )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QFIleInfo>
+#include "base.qpb.h"
 
 namespace model{
 
@@ -77,6 +78,23 @@ public:
     QString phone;				//手机号码
     QIcon avatar;				//用户头像
 
+public:
+    //*
+    // 
+    void load(const chat_im::UserInfo& info) {
+        this->userId = info.userId();
+        this->nickname = info.nickname();
+        this->description = info.description();
+        this->phone = info.phone();
+        if (info.avatar().isEmpty()) {
+            //如果没拿到头像数据
+            this->avatar = QIcon(":/resource/images/xiaoju.jpg");
+        }
+        else {
+            this->avatar =makeQIcon(info.avatar());
+        }
+    }
+
 };
 
 
@@ -85,12 +103,14 @@ enum MessageType{
     TEXT_TYPE,					//文本
     IMAGE_TYPE,					//图片
     FILE_TYPE,					//文件
-    SPEECH_TYPE					//语言
+    SPEECH_TYPE,				//语言
+    UNKNOW_TYPE,                //未知类型
+
 };
 
 class Message{
 public:
-    QString messageId;			//消息编号
+    QString messageId;			//消息编号);
     QString chatiSessionId;		//消息会话的编号
     QString time;				//消息时间
     MessageType messageType;	//消息类型
@@ -100,6 +120,48 @@ public:
     QString fileName;			//文件名称，消息为文本时设置为""
 
 public:
+    void load(const chat_im::MessageInfo& info) {
+        this->messageId = info.messageId();
+        this->chatiSessionId = info.chatSessionId();
+		this->time = formatTime(info.timeStamp());
+		this->sender.load(info.sender());
+		switch (info.data().messageType()) {
+		case chat_im::MessageTypeGadget::STRING: {
+			this->messageType = MessageType::TEXT_TYPE;
+			this->content = info.data().stringMessage().content().toUtf8();
+			break;
+		}
+		case chat_im::MessageTypeGadget::IMAGE: {
+            this->messageType = MessageType::IMAGE_TYPE;
+            this->fileId = info.data().imageMessage().fileId();
+            this->content = info.data().imageMessage().imageContent();
+            break;
+		}
+        case chat_im::MessageTypeGadget::FILE: {
+            this->messageType = MessageType::FILE_TYPE;
+            this->fileId = info.data().fileMessage().fileId();
+            this->fileName = info.data().fileMessage().fileName();
+            if (info.data().fileMessage().hasFileContents()) {
+                this->content = info.data().fileMessage().fileContents();
+            }
+            break;
+        }
+        case chat_im::MessageTypeGadget::SPEECH: {
+            this->messageType = MessageType::SPEECH_TYPE;
+            this->fileId = info.data().speechMessage().fileId();
+            if (info.data().speechMessage().hasFileContents()) {
+                this->content = info.data().speechMessage().fileContents();
+            }
+            break;
+        }
+        default: {
+            this->messageType = MessageType::UNKNOW_TYPE;
+        }
+		}
+
+    }
+
+
     static Message MakeMessage(MessageType type,const QString& chatiSessionId,const UserInfo& sender,const QByteArray& content,const QString& other_data){
         switch(type){
             case TEXT_TYPE:
@@ -183,6 +245,21 @@ public:
     Message lastMessage;		//表示最新消息
     QIcon avatar;				//会话头像
     QString userId;
+
+public:
+    void load(const chat_im::ChatSessionInfo& info) {
+        this->chatSessionId = info.chatSessionId();
+        this->chatSessionName = info.chatSessionName();
+        if (info.hasPrevMessage()) {
+			lastMessage.load(info.prevMessage());
+        }
+        if (info.hasAvatar()) {
+            this->avatar = makeQIcon(info.avatar());
+        }
+        if (info.hasSingleId()) {
+            this->userId = info.singleId();
+        }
+    }
 
 };
 
