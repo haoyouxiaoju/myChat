@@ -2,14 +2,18 @@
 
 #include <QApplication>
 #include "model/data.h"
+#include "model/datacenter.h"
  #include "framelesswidget.h"
 #include "test.qpb.h"
 #include "loginwidget.h"
+#include "network/netclient.h"
+
+#define NETCLIENT_TEXT 1
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    //MainWidget* w = MainWidget::getInstance();
+    MainWidget* w = MainWidget::getInstance();
     //contacts::PeopleInfo peopleinfo;
     //peopleinfo.setAge(12);
     //LOG()<<peopleinfo.age();
@@ -22,7 +26,14 @@ int main(int argc, char *argv[])
     //LoginWidget* w = new LoginWidget();
     //LoginPhoneWidget* w = new LoginPhoneWidget();
 
-    //w->show();
+    //model::DataCenter* datacebter = model::DataCenter::getInstance();
+
+#ifdef NETCLIENT_TEXT
+    NetClient netclient(nullptr);
+    netclient.ping();
+#endif
+    w->show();
 
     return a.exec();
 }
+

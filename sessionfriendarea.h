@@ -40,6 +40,9 @@ public:
     //添加元素
     void addItem(ItemType type,const QString& id,SessionFriendArea* owner , const QIcon& avatar , const QString& name , const QString& lastMessage);
 
+    void addItem(ItemType type,const model::UserInfo& info);
+    void addItem(ItemType type, const model::ChatSessionInfo& info);
+
     //点击指定下标元素
     void clickItem(int index);
 

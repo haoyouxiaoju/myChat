@@ -1,4 +1,7 @@
 #include "mainwidget.h"
+#include "model/datacenter.h"
+#include <QList>
+
 
 MainWidget::MainWidget(QWidget *parent)
     : FramelessWidget(parent)
@@ -34,6 +37,9 @@ void MainWidget::initUi()
 
     initMainWidgetSignal();//绑定信号槽
 
+    //使得开始页面是会话列表
+    switchTabSession();
+
 }
 
 // 初始化主页面
@@ -62,6 +68,8 @@ void MainWidget::initMainWidget()
     mainLayout->addWidget(mainWidgetLeft);
     mainLayout->addWidget(mainWidgetMid);
     mainLayout->addWidget(mainWidgetRight);
+    
+
 
 
 }
@@ -78,7 +86,7 @@ void MainWidget::initMainWidgetLeft()
     userAvatar = new QPushButton();
     userAvatar->setFixedSize(45,45);
     userAvatar->setIconSize(QSize(45,45));
-    userAvatar->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
+    //userAvatar->setIcon(QIcon(":/resource/images/xiaoju.jpg"));
     vBoxLayout->addWidget(userAvatar,1,Qt::AlignTop | Qt::AlignCenter);
 
     //会话列表按钮初始化
@@ -108,8 +116,8 @@ void MainWidget::initMainWidgetMid()
 {
     QGridLayout* gridLayout = new QGridLayout();
     gridLayout->setHorizontalSpacing(0);
-    gridLayout->setVerticalSpacing(5);
-    gridLayout->setContentsMargins(0,5,0,0);
+    gridLayout->setVerticalSpacing(15);
+    gridLayout->setContentsMargins(0,15,0,0);
     gridLayout->setAlignment(Qt::AlignHCenter | Qt::AlignCenter);
     mainWidgetMid->setLayout(gridLayout);
 
@@ -217,12 +225,12 @@ void MainWidget::initMainWidgetRight()
     vBoxLayout->addWidget(topWidget,0,Qt::AlignTop);
 
     //会话展示界面
-    MessageShowArea* messageShowArea  = new MessageShowArea();
+    messageShowArea  = new MessageShowArea();
 
     vBoxLayout->addWidget(messageShowArea);
 
     //消息输入界面
-    MessageEditArea* messageEditArea = new MessageEditArea();
+    messageEditArea = new MessageEditArea();
 
     vBoxLayout->addWidget(messageEditArea,0,Qt::AlignBottom);
 
@@ -235,9 +243,11 @@ void MainWidget::initMainWidgetRight()
 // 用于绑定信号与槽
 void MainWidget::initMainWidgetSignal()
 {
+    //数据处理中心
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
 
     //会话列表按钮信号绑定
-    connect(sessionTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabSession);
+    connect(sessionTabBtn,SIGNAL(QPushButton::clicked),this,SLOT(MainWidget::switchTabSession()));
     //好友列表按钮信号绑定
     connect(friendTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabFriend);
     //好友申请列表信号绑定
@@ -295,6 +305,18 @@ void MainWidget::initMainWidgetSignal()
 
      });
 
+    //
+    //获取用户信息 --头像
+    connect(dataCenter, &model::DataCenter::getMySelfDone, this, [dataCenter,this]() {
+        const auto* myself = dataCenter->getMySelf();
+        this->userAvatar->setIcon(myself->avatar);
+        });
+    dataCenter->getMySelfAsync();
+
+
+    //
+    //dataCenter->getFriendListAsync()
+
 }
 
 //			改变Tab按钮的Icon状态，activTab失去焦点Icon，Tab获取焦点Icon,并将activeTab设置为Tab；
@@ -348,6 +370,23 @@ void MainWidget::switchTabSession()
 
 }
 
+void MainWidget::switchTabSession(const QString& user_id)
+{
+        model::DataCenter* dataCenter = model::DataCenter::getInstance();
+        const model::ChatSessionInfo* info = dataCenter->findChatSessionByUserId(user_id);
+        if (info == nullptr) {
+            qCritical() << POSITION << "⽤⼾对应的会话不存在! userId=" << user_id;
+            return;
+        }
+
+        dataCenter->topChatSessionInfo(info->chatSessionId);
+        
+        switchTabSession();
+
+        this->session_friendArea->clickItem(0);
+
+}
+
 // 切换为好友列表界面
 void MainWidget::switchTabFriend()
 {
@@ -370,16 +409,133 @@ void MainWidget::switchTabApply()
 }
 void MainWidget::loadSessionList()
 {
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if (dataCenter->getChatSessionList()!=nullptr) {
+        updataChatSessionList();
+    }
+    else {
+        connect(dataCenter, &model::DataCenter::getChatSessionListDone, this, &MainWidget::updataChatSessionList, Qt::UniqueConnection);
+        dataCenter->getChatSessionListAsync();
+    }
 
 }
 
 void MainWidget::loadFriendList()
 {
 
+    //数据处理中心
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if (dataCenter->getFriendList() != nullptr) {
+        updataFriendList();
+    }
+    else {
+		//获取好友列表 --
+        connect(dataCenter, &model::DataCenter::getFriendListDone, this,&MainWidget::updataFriendList,Qt::UniqueConnection);
+        dataCenter->getFriendListAsync();
+	}
+
+
 }
+
 
 void MainWidget::loadApplyList()
 {
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if(dataCenter->getApplyList() != nullptr){
+        updataFriendApplyList();
+    }
+    else {
+        //获取好友申请列表
+        connect(dataCenter, &model::DataCenter::getApplyListDone, this, &MainWidget::updataFriendApplyList, Qt::UniqueConnection);
+        dataCenter->getApplyListAsync();
+    }
+}
+
+
+void MainWidget::loadRecentMessages(const QString& chat_session_id)
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if (dataCenter->getRecentMessageList(chat_session_id) != nullptr) {
+        updateRecentMessages(chat_session_id);
+    }
+    else {
+        //获取会话最近消息列表
+        connect(dataCenter, &model::DataCenter::getRecentMessageDone, this, &MainWidget::updateRecentMessages, Qt::UniqueConnection);
+        dataCenter->getRecentMessageAsync(chat_session_id,true);
+    }
+}
+
+void MainWidget::updataFriendList()
+{
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+	if (this->activeTab != ActiveTab::FRIEND_LIST) {
+        return;
+	}
+    this->session_friendArea->clear();
+	const auto* friend_list = dataCenter->getFriendList();
+	for (const auto& e : *friend_list) {
+		this->session_friendArea->addItem(ItemType::FRIENDITEM, e);
+	}
+
+}
+
+void MainWidget::updataChatSessionList()
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if (this->activeTab != ActiveTab::SESSION_LIST) {
+        return;
+    }
+    this->session_friendArea->clear();
+    const  auto* session_list = dataCenter->getChatSessionList();
+    for (const auto& e : *session_list) {
+        this->session_friendArea->addItem(ItemType::SESSIONITEM, e);
+    }
+}
+
+void MainWidget::updataFriendApplyList()
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if (this->activeTab != ActiveTab::APPLY_LIST) {
+        return;
+    }
+    this->session_friendArea->clear();
+    const  auto* apply_list  = dataCenter->getApplyList();
+    for (const auto& e : *apply_list) {
+        this->session_friendArea->addItem(ItemType::FRIENDAPPLYITEM, e);
+    }
+
+}
+
+void MainWidget::updateRecentMessages(const QString& chat_session_id)
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+
+    QList<model::Message>* recentList = dataCenter->getRecentMessageList(chat_session_id);
+
+
+    messageShowArea->clear();
+    int list_size = recentList->size();
+    for (int i = 0; i < list_size ; ++i) {
+        const model::Message& message = recentList->at(i);
+        //  不等于代表不是本人发送 所以在left
+        bool isLeft = (message.sender.userId != dataCenter->getMySelf()->userId);
+        messageShowArea->addItem(isLeft, message);
+    }
+
+    //将消息展示框移动到最新一条信息
+    messageShowArea->scrollToEndLater();
+
+    model::ChatSessionInfo* info = dataCenter->getChatSessionInfo(chat_session_id);
+    if (info != nullptr) {
+        this->sessionName->setText(info->chatSessionName);
+    }
+    else {
+        qCritical() << POSITION << "chatSessionId not found,id=" << chat_session_id;
+
+    }
+
+
+    dataCenter->setCurrentChatSessionId(chat_session_id);
 
 }
 
@@ -390,6 +546,8 @@ void MainWidget::mousePressEvent(QMouseEvent* event)
 
     int x = event->x();
     int y = event->y();
+    //  以上获取的数据是分别是符合条件的区域和鼠标的相对坐标
+    // 判断是否符合窗口移动条件
     if (x <= leftWidgetWidth || y <= topWidgetHeight) {
         this->setMoveStatus(true);
     }

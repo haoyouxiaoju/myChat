@@ -1,4 +1,132 @@
-﻿#include "framelesswidget.h"
+无边框拖拽是参考[Qt实战6.万能的无边框窗口（FramelessWindow） - Qt小罗 - 博客园](https://www.cnblogs.com/luoxiang/p/13528745.html)的文章，对其代码进行修改而来。
+
+代码使用的话，我是直接让widget继承于framlessWidget，
+
+相比较，我将m_movePoint变成是m_pressPoint距离鼠标的相对坐标；然后让m_bIsResizing的值由m_direction来判断是否要拉伸窗口，同时添加了一个透明的带边框的窗体border来实现预览移动而拉伸的状态，因为我将qt小罗的及时修改边框的位置和大小改成延时，所以需要有个能预览的边框来观看。
+
+只要由鼠标按下和松开来调用其他函数，例如鼠标按下要对一些变量进行重新设置避免上次操作的影响、判断是否要拉伸窗口和让border绑定父窗口显示出border。其他函数需要自己查看
+
+对于移动窗口的话，需要对派生类进行多几步的操作
+
+列子：topWidget和mainWidgetLeft都是页面的边缘是我想在这些地方点击后能触发移动条件
+
+```
+void MainWidget::mousePressEvent(QMouseEvent* event)
+{
+    int topWidgetHeight = this->topWidget->height();
+    int leftWidgetWidth = this->mainWidgetLeft->width();
+
+    int x = event->x();
+    int y = event->y();
+    //  以上获取的数据是分别是符合条件的区域和鼠标的相对坐标
+    // 判断是否符合窗口移动条件
+    if (x <= leftWidgetWidth || y <= topWidgetHeight) {
+        this->setMoveStatus(true);//true表示能够移动
+    }
+
+    FramelessWidget::mousePressEvent(event);
+}
+```
+
+
+
+```
+//framelessWidget.h
+
+#pragma once
+
+#include <QWidget>
+class TransparentBorder;
+
+
+class FramelessWidget : public QWidget
+{
+	Q_OBJECT
+public:
+		enum Direction {//鼠标处于哪个边界
+		BOTTOMRIGHT,
+		TOPRIGHT,
+		TOPLEFT,
+		BOTTOMLEFT,
+		RIGHT,
+		DOWN,
+		LEFT,
+		UP,
+		NONE
+	};
+	enum {//距离边界多少时改变鼠标样式
+		MARGIN_MIN_SIZE = 0,
+		MARGIN_MAX_SIZE = 4
+	};
+public:
+	FramelessWidget(QWidget* parent = nullptr);
+	~FramelessWidget();
+	
+	
+	void setBorderColor(const QColor& color);
+
+
+protected:
+	bool event(QEvent* event) override;
+	void leaveEvent(QEvent* event) override;
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseMoveEvent(QMouseEvent* event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
+	//修改鼠标样式，且是否处于边界
+	void updateRegion(QMouseEvent* event);
+	//修改大小和位置，即geometry
+	void resizeRegion(int marginTop, int marginBottom, int marginLeft, int marginRight);
+	void createShadow();
+	void maximizeWidget();
+	void minimizeWidget();
+	void restoreWidget();
+	
+	void setMoveStatus(bool status);
+
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+	bool m_bIsPressed;		//是否鼠标按下
+	bool m_bIsResizing;		//是否要拉伸
+	bool m_bIsDoublePressed;//没用到
+	bool m_bIsMove;
+	QPoint m_pressPoint;	//鼠标按下时的坐标
+	QPoint m_pressPoint_initial;//没用到
+	QPoint m_movePoint;		//鼠标移动了的相对坐标
+	Direction m_direction;	//鼠标的状态即在哪个边界
+
+
+	QRect rect;				//用于存放geometry
+	TransparentBorder* border;
+
+};
+
+class TransparentBorder :public  QWidget {
+public:
+	TransparentBorder();
+	~TransparentBorder();
+
+
+	void resizeBorder(const QPoint& movePoint,FramelessWidget::Direction direction);
+	void moveBorder(const QPoint& movePoint);
+
+	void setParentRect(const QRect& rect);
+	void setBorderColor(const QColor& color);
+protected:
+
+	void paintEvent(QPaintEvent* event) override;
+	
+private:
+	QPoint marginOrigin;
+	QRect parentRect;
+	QColor borderColor;
+};
+```
+
+cpp文件
+
+```
+#include "framelesswidget.h"
 #include <QEvent>
 #include <QMouseEvent>
 #include <QRect>
@@ -587,4 +715,7 @@ void TransparentBorder::paintEvent(QPaintEvent *event)
 
 	//this->resize(parentRect.width(),parentRect.height());
 }
+
+
+```
 

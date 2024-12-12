@@ -1,4 +1,5 @@
 ﻿#include "groupsessiondetailwidget.h"
+#include "debug.h"
 
 GroupSessionDetailWidget::GroupSessionDetailWidget(QWidget *parent)
 	: QDialog(parent)
@@ -91,6 +92,7 @@ GroupSessionDetailWidget::GroupSessionDetailWidget(QWidget *parent)
 	deleteFriendButton->setStyleSheet("QPushButton{color:red;font-size:15px;border:none;}");
 	layout->addWidget(deleteFriendButton, Qt::AlignCenter | Qt::AlignTop);
 
+#if TEXT_UI
 	addAvatarItem(QIcon(":/resource/images/xiaoju.jpg"), "haoyouxiaoju");
 	addAvatarItem(QIcon(":/resource/images/plus_sign.png"), "添加");
 	addAvatarItem(QIcon(":/resource/images/lishijilu.png"), "添加");
@@ -103,6 +105,7 @@ GroupSessionDetailWidget::GroupSessionDetailWidget(QWidget *parent)
 		dialog->exec();
 		
 		});
+#endif
 
 }
 

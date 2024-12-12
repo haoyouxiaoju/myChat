@@ -1,12 +1,22 @@
 #include "sessionfriendarea.h"
+#include "mainwidget.h"
 
 
+#include "debug.h"
 
 SessionFriendArea::SessionFriendArea(QWidget* parent)
     :QScrollArea(parent),selected_item(nullptr)
 {
     this->setWidgetResizable(true);
-    this->verticalScrollBar()->setStyleSheet("QScrollBar:vertical {width:2px;background:rgb(46,46,46)}");
+    this->verticalScrollBar()->setStyleSheet("      \
+      QScrollBar{width:6px;background-color:rgb(231,231,231)}  \
+      QScrollBar:handle:vertical{border-radius:3px;}  \
+      QScrollBar::handle:vertical:normal {width:6px;background-color:transparent}    \
+      QScrollBar::handle:vertical:hover{width:6px;background-color:rgb(143,143,143)}  \
+      QScrollBar::handle:vertical:pressed{width:6px;background-color:rgb(144,143,143)} \
+      QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical{background-color:transparent} \
+      QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical{width:0px}");
+     
     this->horizontalScrollBar()->setStyleSheet("QScrollBar:horizontal {width:0px;}");
 
     container = new QWidget(this);
@@ -20,13 +30,14 @@ SessionFriendArea::SessionFriendArea(QWidget* parent)
     layout->setAlignment(Qt::AlignTop);
     container->setLayout(layout);
 
+#if TEXT_UI
     /*****   debug *****/
     QIcon xiaoju(":/resource/images/xiaoju.jpg");
     for(int i=0;i<25;++i){
         addItem(FRIENDAPPLYITEM,QString::number(i),this,xiaoju,"xiaoju"+QString::number(i),"hello xiaoju");
     }
     /*****   debug *****/
-
+#endif
 }
 
 
@@ -38,7 +49,12 @@ SessionFriendArea::~SessionFriendArea()
 void SessionFriendArea::clear()
 {
     QLayout* layout = container->layout();
-    for(int i=layout->count()-1;i>=0;++i){
+    //
+    // 在切换tab的时候会进行item清空，如果此时不将上次tab栏的所选中的item取消掉
+    // 在切换tab后的下次选中select() 会在selected_item 不为空的时候设置样式 改变item样式
+    //  但此时的selected_item 已被delete 无法进行设置 所以会导致段错误
+    this->selected_item = nullptr;
+    for(int i=layout->count()-1;i>=0;--i){
         QLayoutItem* item = layout->takeAt(i);
         if(item->widget()){
             delete item->widget();
@@ -79,6 +95,36 @@ void SessionFriendArea::addItem(ItemType type,const QString& id,SessionFriendAre
     }
 
 
+}
+
+void SessionFriendArea::addItem(ItemType type,const model::UserInfo& info)
+{
+    this->addItem(type, info.userId, this, info.avatar, info.nickname,"");
+}
+
+void SessionFriendArea::addItem(ItemType type, const model::ChatSessionInfo& info) {
+    switch (info.lastMessage.messageType)
+    {
+    case model::MessageType::TEXT_TYPE: {
+        this->addItem(type, info.chatSessionId,this, info.avatar, info.chatSessionName, QString(info.lastMessage.content));
+        break;
+    }
+    case model::MessageType::FILE_TYPE: {
+		this->addItem(type, info.chatSessionId, this, info.avatar, info.chatSessionName,"[文件]");
+        break;
+    }
+    case model::MessageType::IMAGE_TYPE: {
+		this->addItem(type, info.chatSessionId, this, info.avatar, info.chatSessionName,"[图片]");
+        break;
+    }
+    case model::MessageType::SPEECH_TYPE: {
+		this->addItem(type, info.chatSessionId, this, info.avatar, info.chatSessionName,"[语音]");
+        break;
+    }
+    default:
+        qCritical() <<POSITION <<"messageType 错误！messageType=" << info.lastMessage.messageType;
+        break;
+    }
 }
 
 void SessionFriendArea::clickItem(int index)
@@ -182,6 +228,9 @@ void SessionFriendItem::select(){
     this->setStyleSheet("QWidget{background-color:rgb(200,200,200)}");
     this->selected = true;
     owner->selected_item = this;
+
+    //调用自己被点击后需要进行的活动
+    this->avtion();
 }
 
 /***** *****	会话item		***** *****/
@@ -194,7 +243,11 @@ SessionItem::SessionItem(SessionFriendArea *owner, const QString &chatSessionId,
 
 void SessionItem::avtion()
 {
-    LOG()<<"Session Item";
+    LOG()<<"Session Item,chatSessionId="<<chatSessionId;
+
+    MainWidget* m_widget = MainWidget::getInstance();
+    m_widget->loadRecentMessages(chatSessionId);
+    
 }
 
 /***** *****	会话item		***** *****/
@@ -214,6 +267,11 @@ FriendItem::FriendItem(SessionFriendArea *owner, const QString &userId, const QI
 void FriendItem::avtion()
 {
     LOG()<<"FriendItem";
+
+    
+    MainWidget* m_widget = MainWidget::getInstance();
+    m_widget->switchTabSession(userId);
+
 }
 /***** *****	好友item		***** *****/
 /***** *****	 END		***** *****/

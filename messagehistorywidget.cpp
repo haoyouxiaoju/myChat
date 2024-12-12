@@ -2,6 +2,7 @@
 #include "model/data.h"
 #include <QMouseEvent>
 #include <QGraphicsDropShadowEffect>
+#include "debug.h"
 
 messageHistoryWidget* messageHistoryWidget::w = nullptr;
 
@@ -72,9 +73,8 @@ messageHistoryWidget::messageHistoryWidget(QWidget *parent)
         this->minimizeWidget();
         });
 
-#define DEBUG 1
 
-#ifdef DEBUG
+#ifdef TEXT_UI
 
     title->setText("haoyouxiaojuhaoyouxiaoju");
 #endif // DEBUG
@@ -125,6 +125,7 @@ messageHistoryWidget::messageHistoryWidget(QWidget *parent)
 
     layout->addWidget(area, 3, 0, 7, 10);
 
+#if TEXT_UI
 	for (int i = 0; i < 5; ++i) {
 		model::Message message;
 		model::UserInfo user;
@@ -138,6 +139,7 @@ messageHistoryWidget::messageHistoryWidget(QWidget *parent)
 		addItem( message);
 		addItem( message);
 	}
+#endif
 
 
 }

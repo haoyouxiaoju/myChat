@@ -46,8 +46,12 @@ private:
     // 主界面信号绑定
     void initMainWidgetSignal();
 
+public:
+    //
+    // 
     //tab按钮切换
     void switchTabSession();
+    void switchTabSession(const QString& user_id);//用于点击好友跳转到会话
     void switchTabFriend();
     void switchTabApply();
     void changeTabIconAction(MainWidget::ActiveTab& activeTab,MainWidget::ActiveTab tab);
@@ -56,6 +60,15 @@ private:
     void loadSessionList();
     void loadFriendList();
     void loadApplyList();
+
+    //
+    // 点击会话列表item 触发加载会话消息 ---- 好友列表也使用此函数
+    void loadRecentMessages(const QString& chat_session_id);
+
+    void updataFriendList();
+    void updataChatSessionList();
+    void updataFriendApplyList();
+    void updateRecentMessages(const QString& chat_session_d);
 protected:
     void mousePressEvent(QMouseEvent* event) override;
 private:
@@ -84,7 +97,9 @@ private:
     bool maximize_button_status;
     QPushButton* closeMainWidget_button;//控制mainWidget关闭
     QPushButton* more_Button;           //更多按钮
-    SessionDetailsWidget* sessionDetail_widget;//弹窗
+    SessionDetailsWidget* sessionDetail_widget;//弹窗 
+    MessageShowArea* messageShowArea;   //会话消息展示
+    MessageEditArea* messageEditArea;   //消息输入框
     //bool isOpen_moreButton;             //是否弹出弹窗
 };
 #endif // MAINWIDGET_H

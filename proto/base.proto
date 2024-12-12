@@ -86,7 +86,7 @@ message FileDownLoadData{
     bytes file_content=2;
 }
 
-message FileUploadData{
+message FileUpLoadData{
     string file_name =1;
     int64 file_size =2;
     bytes file_content =3;

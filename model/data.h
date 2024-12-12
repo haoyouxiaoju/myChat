@@ -184,7 +184,7 @@ public:
     }
 private:
     static QString makeMessageId(){
-        return	QUuid::createUuid().toString();
+        return QString("M"+QUuid::createUuid().toString());
     }
     static Message MakeTextMessage(const QString& chatiSessionId ,const UserInfo& sender,const QByteArray& content){
         Message message;

@@ -1,4 +1,6 @@
 ﻿#include "messageshowarea.h"
+#include "debug.h"
+#include <QTimer>
 
 
 MessageShowArea::MessageShowArea(QWidget * parent):
@@ -22,7 +24,7 @@ MessageShowArea::MessageShowArea(QWidget * parent):
     this->setWidget(container);
 
 	//debug
-
+#if TEXT_UI
 
 	for (int i = 0; i < 5; ++i) {
 		model::Message message;
@@ -38,6 +40,25 @@ MessageShowArea::MessageShowArea(QWidget * parent):
 		addItem(false, message);
 	}
 
+#endif
+}
+
+void MessageShowArea::scrollToEndLater()
+{
+    LOG() << "scrollToEndLater";
+    QTimer* timer = new QTimer();
+    LOG() << this->verticalScrollBar()->maximum();
+    connect(timer, &QTimer::timeout, this, [=]() {
+        // 执⾏滚动操作
+    LOG() << this->verticalScrollBar()->maximum();
+        int maxValue = this->verticalScrollBar()->maximum();
+        this->verticalScrollBar()->setValue(maxValue);
+    LOG() << this->verticalScrollBar()->maximum();
+        // 销毁定时器
+        timer->stop();
+        timer->deleteLater();
+        });
+    timer->start(400);
 }
 
 void MessageShowArea::addItem(bool isLeft, const model::Message& message)

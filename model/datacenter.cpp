@@ -1,4 +1,4 @@
-#include "datacenter.h"
+ï»¿#include "datacenter.h"
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QDir>
@@ -7,14 +7,12 @@
 
 
 namespace model {
-
 	DataCenter::DataCenter()
 		:netClient(this)
 	{
 
-		friendList = new QList<UserInfo>();
-		chatSessionList = new QList<ChatSessionInfo>();
-		applyList = new QList<UserInfo>();
+		//chatSessionList = new QList<ChatSessionInfo>();
+		//applyList = new QList<UserInfo>();
 		searchUserResult = new QList<UserInfo>();
 		searchMessageResult = new QList<Message>();
 		recentMessages = new QHash<QString, QList<Message>>();
@@ -25,9 +23,9 @@ namespace model {
 
 	DataCenter::~DataCenter()
 	{
-		//ĞèÒªdeleteÇ°Ãænew³öÀ´µÄQListºÍQHash
+		//éœ€è¦deleteå‰é¢newå‡ºæ¥çš„QListå’ŒQHash
 		//
-		delete myself;//ËæÍË³ö¶øÉ¾³ı
+		delete myself;//éšé€€å‡ºè€Œåˆ é™¤
 		// ...
 		// detodo
 
@@ -50,7 +48,7 @@ namespace model {
 			return;
 		}
 
-		//Ğ´Èë³õÊ¼ÄÚÈİ
+		//å†™å…¥åˆå§‹å†…å®¹
 		QString data("{\n\n}");
 		file.write(data.toUtf8());
 		file.close();
@@ -88,18 +86,18 @@ namespace model {
 
 	void DataCenter::loadDataFile()
 	{
-		//  appData Ä¿Â¼
+		//  appData ç›®å½•
 		QString bashPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
 		QString f_path = bashPath + "/ChatClient.json";
 
 		QDir dir;
-		if (!dir.exists(bashPath)) {//ÎÄ¼ş¼Ğ²»´æÔÚÔò´´½¨
+		if (!dir.exists(bashPath)) {//æ–‡ä»¶å¤¹ä¸å­˜åœ¨åˆ™åˆ›å»º
 			dir.mkpath(bashPath);
 		}
 
 		QFileInfo fileInfo(f_path);
-		if (!fileInfo.exists()) {//ÎÄ¼ş²»´æÔÚÔò´´½¨
+		if (!fileInfo.exists()) {//æ–‡ä»¶ä¸å­˜åœ¨åˆ™åˆ›å»º
 			initDataFile();
 		}
 
@@ -109,7 +107,7 @@ namespace model {
 			return;
 		}
 
-		//»ñÈ¡ »ù´¡ÄÚÈİ jsonÎÄ¼ş
+		//è·å– åŸºç¡€å†…å®¹ jsonæ–‡ä»¶
 		QJsonDocument jsonDoc = QJsonDocument::fromJson(file.readAll());
 		if (jsonDoc.isNull()) {
 			qCritical() << POSITION << "Invalid JSON format";
@@ -125,7 +123,7 @@ namespace model {
 			(*this->unreadMessageCount)[i.key()] = i.value().toInt();
 		}
 
-		//¼ì²éÇ°Ãæ¶Áµ½µÄÄÚÈİÊÇ·ñÕıÈ·
+		//æ£€æŸ¥å‰é¢è¯»åˆ°çš„å†…å®¹æ˜¯å¦æ­£ç¡®
 		if (loginSessionId == "") {
 			qCritical() << POSITION << "SessionId is null";
 			return;
@@ -136,6 +134,193 @@ namespace model {
 
 			
 
+	}
+
+	ChatSessionInfo* DataCenter::findChatSessionByUserId(const QString& userId)
+	{
+		if (this->chatSessionList == nullptr) {
+			return nullptr;
+		}
+		for (auto& e : *chatSessionList) {
+			if (e.userId == userId) {
+				return &e;
+			}
+		}
+
+		return nullptr;
+
+	}
+
+	void DataCenter::topChatSessionInfo(const QString& chat_session_id)
+	{
+		if (this->chatSessionList == nullptr) {
+			return;
+		}
+		auto e = this->chatSessionList->begin();
+		for (; e != this->chatSessionList->end(); ++e) {
+			if ((*e).chatSessionId == chat_session_id) {
+				break;
+			}
+		}
+		const ChatSessionInfo info = *e;
+		this->chatSessionList->erase(e);
+		this->chatSessionList->push_front(info);
+
+	}
+
+	QString DataCenter::getLoginSessionId()
+	{
+		return this->loginSessionId;
+	}
+
+
+	void DataCenter::resetMySelf(std::shared_ptr<chat_im::GetUserInfoRsp> myself)
+	{
+		if (this->myself == nullptr) {
+			this->myself = new UserInfo();
+		}
+
+		this->myself->load(myself->userInfo());
+	}
+
+	void DataCenter::getMySelfAsync()
+	{
+		netClient.getMySelf(loginSessionId);
+	}
+
+	UserInfo* DataCenter::getMySelf()
+	{
+		return this->myself;
+	}
+
+	void DataCenter::resetFriendList(std::shared_ptr<chat_im::GetFriendListRsp> friend_list)
+	{
+		if (this->friendList == nullptr) {
+			this->friendList = new QList<UserInfo>();
+		}
+
+
+		//æ¸…ç©º
+		this->friendList->clear();
+
+		for (const auto& e : friend_list->friendList()) {
+			// chat_im::userInfo => model::userInfo
+			UserInfo u_info;
+			u_info.load(e);
+			
+			this->friendList->push_back(u_info);
+
+		}
+	}
+
+	void DataCenter::getFriendListAsync()
+	{
+		netClient.getFriendList(loginSessionId);
+	}
+
+	QList<UserInfo>* DataCenter::getFriendList()
+	{
+		return this->friendList;
+	}
+
+	void DataCenter::resetChatSessionList(std::shared_ptr<chat_im::GetChatSessionListRsp> session_list)
+	{
+		if (this->chatSessionList == nullptr) {
+			this->chatSessionList = new QList<model::ChatSessionInfo>();
+		}
+
+		this->chatSessionList->clear();
+
+		for (const auto& e : session_list->chatSessionInfoList()) {
+			model::ChatSessionInfo info;
+			info.load(e);
+			this->chatSessionList->push_back(info);
+		}
+
+	}
+
+	void DataCenter::getChatSessionListAsync()
+	{
+		netClient.getChatSessionList(loginSessionId);
+	}
+
+	QList<ChatSessionInfo>* DataCenter::getChatSessionList()
+	{
+		return this->chatSessionList;
+	}
+
+
+
+	void DataCenter::resetApplyList(std::shared_ptr<chat_im::GetPendingFriendEventListRsp> apply_list)
+	{
+		if (this->applyList == nullptr) {
+			this->applyList = new QList<UserInfo>();
+		}
+		this->applyList->clear();
+		for (const auto& e : apply_list->event()) {
+			UserInfo info;
+			info.load(e.sender());
+			this->applyList->push_back(info);
+		}
+
+	}
+
+	void DataCenter::getApplyListAsync()
+	{
+		netClient.getApplyList(loginSessionId);
+	}
+
+	QList<UserInfo>* DataCenter::getApplyList()
+	{
+		return this->applyList;
+	}
+
+	ChatSessionInfo* DataCenter::getChatSessionInfo(const QString& chat_session_id)
+	{
+		if (this->chatSessionList == nullptr)
+			return nullptr;
+		for (auto& e : *this->chatSessionList) {
+			if (e.chatSessionId == chat_session_id) {
+				return &e;
+			}
+		}
+		return nullptr;
+	}
+
+	const QString& DataCenter::getCurrentChatSessionId()
+	{
+		return currentChatSessionId;
+	}
+
+	void DataCenter::setCurrentChatSessionId(const QString& chat_session_id)
+	{
+		this->currentChatSessionId = chat_session_id;
+	}
+
+	void DataCenter::resetRecentMessage(const QString& chat_session_id ,std::shared_ptr<chat_im::GetRecentMsgRsp> recentMessage_list)
+	{
+		QList<Message>& message_list = (*recentMessages)[chat_session_id];
+		message_list.clear();
+
+		for (const auto& e : recentMessage_list->messageList()) {
+			Message message;
+			message.load(e);
+			message_list.push_back(message);
+		}
+
+	}
+
+	void DataCenter::getRecentMessageAsync(const QString& chat_session_id,bool updataUi)
+	{
+		netClient.getRecentMessage(loginSessionId,chat_session_id,updataUi);
+	}
+
+	QList<model::Message>* DataCenter::getRecentMessageList(const QString& chat_session_id)
+	{
+		if (recentMessages->contains(chat_session_id) == false) {
+			return nullptr;
+		}
+		return &(*recentMessages)[chat_session_id];
 	}
 
 }

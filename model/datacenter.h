@@ -6,6 +6,11 @@
 #include "data.h"
 #include "../network/netclient.h"
 
+#include "user.qpb.h"
+#include "friend.qpb.h"
+#include "message.qpb.h"
+
+
 namespace model {
 
 		// 登录会话id
@@ -29,9 +34,68 @@ namespace model {
 		//如果文件和文件夹不存在则创建文件夹和文件，文件通过initDataFile()进行创建且初始化内容
 		void loadDataFile(); 
 
+		ChatSessionInfo* findChatSessionByUserId(const QString& userId);
+
+		void topChatSessionInfo(const QString& chat_session_id);
+
+
+		QString getLoginSessionId();
+
+		//
+		//获取用户自身信息
+		void resetMySelf(std::shared_ptr<chat_im::GetUserInfoRsp> myself);
+		void getMySelfAsync();
+		UserInfo* getMySelf();
+
+		//
+		//获取好友列表信息
+		void resetFriendList(std::shared_ptr<chat_im::GetFriendListRsp> friend_list);
+		void getFriendListAsync();
+		QList<UserInfo>* getFriendList();
+
+		//
+		//获取会话列表信息
+		void resetChatSessionList(std::shared_ptr<chat_im::GetChatSessionListRsp> session_list);
+		void getChatSessionListAsync();
+		QList<ChatSessionInfo>* getChatSessionList();
+
+		//
+		//获取好友申请列表
+		void resetApplyList(std::shared_ptr<chat_im::GetPendingFriendEventListRsp> apply_list);
+		void getApplyListAsync();
+		QList<UserInfo>* getApplyList();
+
+		//
+		//获取会话的信息
+		ChatSessionInfo* getChatSessionInfo(const QString& chat_session_id);
+		//获取当前选中会话的会话id
+		const QString& getCurrentChatSessionId();
+		void setCurrentChatSessionId(const QString& chat_session_id);
+
+		//
+		//获取会话最近消息
+		void resetRecentMessage(const QString& chat_session_id,std::shared_ptr<chat_im::GetRecentMsgRsp> recentMessage_list);
+		void getRecentMessageAsync(const QString& chat_session_id,bool updataUi);
+		QList<model::Message>* getRecentMessageList(const QString& chat_session_id);
+		
+
 	private:
 		DataCenter();
 		~DataCenter();
+
+	signals:
+		void getMySelfDone();//已获取用户自身信息完成
+	signals:
+		void getFriendListDone();//已获取好友列表信息完成
+	signals:
+		void getChatSessionListDone();
+	signals:
+		void getApplyListDone();
+	signals:
+		void getRecentMessageDone(const QString& chat_session_id);
+	signals:
+		void getRecentMessageDoneNotUi(const QString& chat_session_id);
+
 
 
 
@@ -75,11 +139,6 @@ namespace model {
 		QString currentVerifyCodeId = "";
 
 		NetClient netClient;
-
-		DataCenter();
-
-
-
 
 	};
 

@@ -1,4 +1,5 @@
 ﻿#include "sessiondetailswidget.h"
+#include "debug.h"
 
 SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& sessionInfo,QWidget *parent)
 	: QDialog(parent),sessionInfo(sessionInfo)
@@ -13,7 +14,7 @@ SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& session
 	//widget 的大小设置
 	//
 	this->setFixedHeight(thisHeight);
-	this->setFixedWidth(0);
+	this->setFixedWidth(1);
 
 	this->setAttribute(Qt::WA_DeleteOnClose);
 	this->setWindowFlags(Qt::FramelessWindowHint|Qt::Popup);
@@ -91,6 +92,8 @@ SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& session
 	deleteFriendButton->setStyleSheet("QPushButton{color:red;font-size:15px;border:none;}");
 	layout->addWidget(deleteFriendButton, Qt::AlignCenter | Qt::AlignTop);
 
+	//debug
+#if TEXT_UI
 	addAvatarItem(QIcon(":/resource/images/xiaoju.jpg"), "haoyouxiaoju");
 	addAvatarItem(QIcon(":/resource/images/plus_sign.png"), "添加");
 	addAvatarItem(QIcon(":/resource/images/lishijilu.png"), "添加");
@@ -103,6 +106,8 @@ SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& session
 		dialog->exec();
 		
 		});
+
+#endif
 	
 }
 
@@ -140,12 +145,13 @@ void SessionDetailsWidget::show_widget()
 	QVariantAnimation* animation = new QVariantAnimation(this);
 	animation->setDuration(300); // 
 	animation->setEasingCurve(QEasingCurve::InOutCirc);
-	animation->setStartValue(0);
+	animation->setStartValue(1);
 	animation->setEndValue(270);
 	connect(animation, &QVariantAnimation::valueChanged, this, [this](const QVariant& value) {
 		this->setFixedWidth(value.toReal()); // 根据新的宽度调整大小  
 		});
 	this->show();
+	//this->setVisible(true);
 	animation->start();
 	
 

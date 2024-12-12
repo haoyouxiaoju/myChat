@@ -1,4 +1,4 @@
-#ifndef MESSAGESHOWAREA_H
+﻿#ifndef MESSAGESHOWAREA_H
 #define MESSAGESHOWAREA_H
 
 #include <QScrollArea>
@@ -17,16 +17,19 @@
 
 
 
-
+//
+//会话消息展示
 class MessageShowArea : public QScrollArea
 {
     Q_OBJECT
 public:
     MessageShowArea(QWidget* parent = nullptr);
+
+    void scrollToEndLater();
     
+    //尾插
     void addItem(bool isLeft, const model::Message& message);
     void clear();
-
 
 private:
     QWidget* container;

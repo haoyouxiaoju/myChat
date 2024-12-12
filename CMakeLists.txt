@@ -9,11 +9,32 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+#message(${CMAKE_PREFIX_PATH})
+#message(${CMAKE_MAKE_PROGRAM})
+#message(${PATH})
+list(APPEND CMAKE_PREFIX_PATH  D:/Programs/vcpkg/installed/x64-windows/ )
+
+#set(Protobuf_DIR D:/Programs/vcpkg/installed/x64-windows/share/)
+#set(Vulkan_INCLUDE_DIR D:/Programs/vcpkg/installed/x64-windows/)
+#message(${Protobuf_DIR})
+#message(${CMAKE_PREFIX_PATH})
+#set(Protobuf_INCLUDE_DIR  "D:/Programs/vcpkg/installed/x64-windows/include")
+#set(Protobuf_LIBRARY "D:/Programs/vcpkg/installed/x64-windows/debug/bin/libprotobufd.dll")
+
+
+
+
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets NetWork WebSockets Protobuf)
 
+#message(${PROTOBUF_INCLUDE_DIR})
 
 file(GLOB PB_FILES "./proto/*.proto")
+#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PB_FILES})
+#include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#message(111${Protobuf_SRC_ROOT_FOLDER})
+
+
 
 set(MODEL_FILES
     model/data.h
@@ -29,7 +50,7 @@ set(PROJECT_SOURCES
         mainwidget.cpp
         mainwidget.h
 )
-
+#message(${PROTO_SRCS})
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ChatClient
         MANUAL_FINALIZATION
@@ -54,8 +75,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 qt_add_protobuf(ChatClient PROTO_FILES ${PB_FILES})
 
 FILE(GLOB QPB_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.qpb.* )
-FILE(COPY ${QPB_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/proto/qpb/)
-#message(${QPB_FILES})
+FILE(COPY ${PROTO_SRCS} ${PROTO_HDIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/proto/qpb/)
+message(${QPB_FILES})
 
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ChatClient APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -75,7 +96,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(ChatClient PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt6::Network Qt6::WebSockets Qt6::Protobuf )
+target_link_libraries(ChatClient PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt6::Network Qt6::WebSockets Qt6::Protobuf)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

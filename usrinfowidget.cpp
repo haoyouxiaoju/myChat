@@ -1,4 +1,5 @@
 ﻿#include "usrinfowidget.h"
+#include "debug.h"
 
 usrInfoWidget::usrInfoWidget(QWidget *parent)
     : QDialog(parent)
@@ -75,7 +76,7 @@ usrInfoWidget::usrInfoWidget(QWidget *parent)
     sendCode_button = new QPushButton();
 
 
-
+#if TEXT_UI
     //debug
     id_edit->setReadOnly(false);
     userName_edit->setReadOnly(false);
@@ -87,7 +88,7 @@ usrInfoWidget::usrInfoWidget(QWidget *parent)
     desc_edit->setText("hello world");
     phone_edit->setText("10000000000");
     //debug_end
-
+#endif
 
 
     //设置lineEdit 只读
