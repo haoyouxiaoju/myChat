@@ -36,7 +36,7 @@ namespace model {
 
 		ChatSessionInfo* findChatSessionByUserId(const QString& userId);
 
-		void topChatSessionInfo(const QString& chat_session_id);
+		void topChatSessionInfo(const ChatSessionInfo& chat_session_info);
 
 
 		QString getLoginSessionId();

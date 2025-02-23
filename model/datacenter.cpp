@@ -151,20 +151,26 @@ namespace model {
 
 	}
 
-	void DataCenter::topChatSessionInfo(const QString& chat_session_id)
+	void DataCenter::topChatSessionInfo(const ChatSessionInfo& chat_session_info)
 	{
 		if (this->chatSessionList == nullptr) {
 			return;
 		}
-		auto e = this->chatSessionList->begin();
-		for (; e != this->chatSessionList->end(); ++e) {
-			if ((*e).chatSessionId == chat_session_id) {
+		auto e = this->chatSessionList->cbegin();
+		for (; e != this->chatSessionList->cend(); ++e) {
+			if ((*e).chatSessionId == chat_session_info.chatSessionId) {
 				break;
 			}
 		}
-		const ChatSessionInfo info = *e;
+		if (e == this->chatSessionList->cend()) {
+			return;
+		}
+
+		ChatSessionInfo info = chat_session_info;
+
 		this->chatSessionList->erase(e);
 		this->chatSessionList->push_front(info);
+		
 
 	}
 

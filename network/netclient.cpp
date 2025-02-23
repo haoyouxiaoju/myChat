@@ -3,7 +3,7 @@
 #include <QUuid>
 #include <QNetWorkRequest>
 #include "../model/datacenter.h"
-#include "webSocket.qpb.h";
+#include "webSocket.qpb.h"
 #include "user.qpb.h"
 #include "message.qpb.h"
 
@@ -140,7 +140,6 @@ void NetClient::getRecentMessage(const QString& login_session_id, const QString&
 
 	QByteArray data = req.serialize(&this->serializer);
 	QNetworkReply* reply = sendHttpRequest("/service/message_storage/get_recent", data);
-
 	connect(reply, &QNetworkReply::finished, this, [this,reply,chat_session_id,updataUi]() {
 		std::shared_ptr<chat_im::GetRecentMsgRsp> recent_message = this->handleHttpResponse<chat_im::GetRecentMsgRsp>(reply);
 

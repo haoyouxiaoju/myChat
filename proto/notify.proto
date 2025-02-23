@@ -3,7 +3,7 @@ package chat_im;
 
 import "base.proto";
 
-option cc_generic_services = true;
+//option cc_generic_services = true;
 
 enum NotifyType {
     FRIEND_ADD_APPLY =0;

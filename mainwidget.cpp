@@ -247,7 +247,7 @@ void MainWidget::initMainWidgetSignal()
     model::DataCenter* dataCenter = model::DataCenter::getInstance();
 
     //会话列表按钮信号绑定
-    connect(sessionTabBtn,SIGNAL(QPushButton::clicked),this,SLOT(MainWidget::switchTabSession()));
+    connect(sessionTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabSession);
     //好友列表按钮信号绑定
     connect(friendTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabFriend);
     //好友申请列表信号绑定
@@ -322,6 +322,7 @@ void MainWidget::initMainWidgetSignal()
 //			改变Tab按钮的Icon状态，activTab失去焦点Icon，Tab获取焦点Icon,并将activeTab设置为Tab；
 void MainWidget::changeTabIconAction(MainWidget::ActiveTab& activeTab,MainWidget::ActiveTab tab){
     // 失去焦点设置
+    LOG() << activeTab;
     switch(activeTab){
     case MainWidget::SESSION_LIST:
         sessionTabBtn->setIcon(QIcon(":/resource/images/duihua.png"));
@@ -370,20 +371,21 @@ void MainWidget::switchTabSession()
 
 }
 
-void MainWidget::switchTabSession(const QString& user_id)
+void MainWidget::switchToSession(const QString& user_id)
 {
-        model::DataCenter* dataCenter = model::DataCenter::getInstance();
-        const model::ChatSessionInfo* info = dataCenter->findChatSessionByUserId(user_id);
-        if (info == nullptr) {
-            qCritical() << POSITION << "⽤⼾对应的会话不存在! userId=" << user_id;
-            return;
-        }
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+	const model::ChatSessionInfo* info = dataCenter->findChatSessionByUserId(user_id);
+	if (info == nullptr) {
+		qCritical() << POSITION << "⽤⼾对应的会话不存在! userId=" << user_id;
+		return;
+	}
+    LOG() << user_id;
+    LOG() << info->userId;
 
-        dataCenter->topChatSessionInfo(info->chatSessionId);
-        
-        switchTabSession();
+	dataCenter->topChatSessionInfo(*info);
 
-        this->session_friendArea->clickItem(0);
+	switchTabSession();
+    this->session_friendArea->clickItem(0);
 
 }
 

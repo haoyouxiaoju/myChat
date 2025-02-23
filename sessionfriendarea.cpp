@@ -53,6 +53,9 @@ void SessionFriendArea::clear()
     // 在切换tab的时候会进行item清空，如果此时不将上次tab栏的所选中的item取消掉
     // 在切换tab后的下次选中select() 会在selected_item 不为空的时候设置样式 改变item样式
     //  但此时的selected_item 已被delete 无法进行设置 所以会导致段错误
+    if (this->selected_item) {
+		this->selected_item->selected = false;
+    }
     this->selected_item = nullptr;
     for(int i=layout->count()-1;i>=0;--i){
         QLayoutItem* item = layout->takeAt(i);
@@ -64,61 +67,59 @@ void SessionFriendArea::clear()
     }
 }
 
-void SessionFriendArea::addItem(ItemType type,const QString& id,SessionFriendArea* owner, const QIcon &avatar, const QString &name, const QString &lastMessage)
+void SessionFriendArea::addItem(ItemType type,const QString& id, const QIcon &avatar, const QString &name, const QString &lastMessage)
 {
-    switch(type){
-    case SESSIONITEM:{
+	SessionFriendItem* item = nullptr;
+	switch (type) {
+	case SESSIONITEM: {
 
-        SessionItem* item = new SessionItem(owner,id,avatar,name,lastMessage);
-        container->layout()->addWidget(item);
-        break;
-    }
-    case FRIENDITEM:{
-        FriendItem* item = new FriendItem(owner,id,avatar,name,lastMessage);
-        container->layout()->addWidget(item);
-        break;
-    }
-    case FRIENDAPPLYITEM:{
-        FriendApplyItem* item = new FriendApplyItem(owner,id,avatar,name);
-        container->layout()->addWidget(item);
-        break;
-    }
-    case SESSIONFRIENDITEM:{
-        SessionFriendItem* item = new SessionFriendItem(owner,avatar,name,lastMessage);
-        container->layout()->addWidget(item);
-        break;
-    }
-    defalut:{
+		item = new SessionItem(this, id, avatar, name, lastMessage);
+		break;
+	}
+	case FRIENDITEM: {
+		item = new FriendItem(this, id, avatar, name, lastMessage);
+		break;
+	}
+	case FRIENDAPPLYITEM: {
+		item = new FriendApplyItem(this, id, avatar, name);
+		break;
+	}
+	case SESSIONFRIENDITEM: {
+		item = new SessionFriendItem(this, avatar, name, lastMessage);
+		break;
+	}
+    defalut: {
 
-    }
+	}
 
-    }
+	}
+	container->layout()->addWidget(item);
 
 
 }
 
 void SessionFriendArea::addItem(ItemType type,const model::UserInfo& info)
 {
-    this->addItem(type, info.userId, this, info.avatar, info.nickname,"");
+    this->addItem(type, info.userId, info.avatar, info.nickname,"");
 }
 
 void SessionFriendArea::addItem(ItemType type, const model::ChatSessionInfo& info) {
     switch (info.lastMessage.messageType)
     {
     case model::MessageType::TEXT_TYPE: {
-        this->addItem(type, info.chatSessionId,this, info.avatar, info.chatSessionName, QString(info.lastMessage.content));
+        this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName, QString(info.lastMessage.content));
         break;
     }
     case model::MessageType::FILE_TYPE: {
-		this->addItem(type, info.chatSessionId, this, info.avatar, info.chatSessionName,"[文件]");
+		this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName,"[文件]");
         break;
     }
     case model::MessageType::IMAGE_TYPE: {
-		this->addItem(type, info.chatSessionId, this, info.avatar, info.chatSessionName,"[图片]");
+		this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName,"[图片]");
         break;
     }
     case model::MessageType::SPEECH_TYPE: {
-		this->addItem(type, info.chatSessionId, this, info.avatar, info.chatSessionName,"[语音]");
+		this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName,"[语音]");
         break;
     }
     default:
@@ -129,12 +130,12 @@ void SessionFriendArea::addItem(ItemType type, const model::ChatSessionInfo& inf
 
 void SessionFriendArea::clickItem(int index)
 {
-    if(index > container->layout()->count() || index < 0){
+    if(index >= container->layout()->count()){
         LOG()<<"所选index超出范围,index="<<index;
         return;
     }
     QLayoutItem* item = container->layout()->itemAt(index);
-    if(item->widget() == nullptr || item == nullptr){
+    if(item->widget() == nullptr){
         LOG()<<"指定元素不存在，index="<<index;
         return;
     }
@@ -177,8 +178,9 @@ SessionFriendItem::SessionFriendItem(SessionFriendArea* owner, const QIcon &avat
     layout->addWidget(MessageLabel,1,2,1,8);
 }
 
-void SessionFriendItem::paintEvent(QPaintEvent *)
+void SessionFriendItem::paintEvent(QPaintEvent *event)
 {
+    (void)event;
     QStyleOption opt;
     opt.initFrom(this);
     QPainter p(this);
@@ -187,7 +189,8 @@ void SessionFriendItem::paintEvent(QPaintEvent *)
 
 void SessionFriendItem::mousePressEvent(QMouseEvent *event)
 {
-    QWidget::mousePressEvent(event);
+    //QWidget::mousePressEvent(event);
+    (void)event;
     this->select();
 }
 
@@ -203,8 +206,9 @@ void SessionFriendItem::enterEvent(QEnterEvent *event)
 
 void SessionFriendItem::leaveEvent(QEvent *event)
 {
-    QWidget::leaveEvent(event);
+    //QWidget::leaveEvent(event);
 
+    (void)event;
     if(this->selected)
         return;
 
@@ -270,7 +274,7 @@ void FriendItem::avtion()
 
     
     MainWidget* m_widget = MainWidget::getInstance();
-    m_widget->switchTabSession(userId);
+    m_widget->switchToSession(userId);
 
 }
 /***** *****	好友item		***** *****/

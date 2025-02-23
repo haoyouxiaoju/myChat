@@ -9,31 +9,21 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#message(${CMAKE_PREFIX_PATH})
-#message(${CMAKE_MAKE_PROGRAM})
-#message(${PATH})
 list(APPEND CMAKE_PREFIX_PATH  D:/Programs/vcpkg/installed/x64-windows/ )
+#list(APPEND CMAKE_PREFIX_PATH   "D:/install/protoc")
+#find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Protobuf)
 
-#set(Protobuf_DIR D:/Programs/vcpkg/installed/x64-windows/share/)
-#set(Vulkan_INCLUDE_DIR D:/Programs/vcpkg/installed/x64-windows/)
-#message(${Protobuf_DIR})
-#message(${CMAKE_PREFIX_PATH})
-#set(Protobuf_INCLUDE_DIR  "D:/Programs/vcpkg/installed/x64-windows/include")
-#set(Protobuf_LIBRARY "D:/Programs/vcpkg/installed/x64-windows/debug/bin/libprotobufd.dll")
-
-
+#      由于不会执行cmake就生成pb文件,程序编译后才会有pb文件 
+#       所以不能直接message()查看pb文件得编译后才能打印,否则message会报缺少参数
+FILE(GLOB QPB_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.qpb.* )
+FILE(COPY ${QPB_FILES} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/proto/qpb/)
+#message(${QPB_FILES})
 
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets NetWork WebSockets Protobuf)
-
-#message(${PROTOBUF_INCLUDE_DIR})
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets NetWork WebSockets protobuf)
 
 file(GLOB PB_FILES "./proto/*.proto")
-#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PB_FILES})
-#include_directories(${CMAKE_CURRENT_BINARY_DIR})
-#message(111${Protobuf_SRC_ROOT_FOLDER})
-
 
 
 set(MODEL_FILES
@@ -74,9 +64,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     )
 qt_add_protobuf(ChatClient PROTO_FILES ${PB_FILES})
 
-FILE(GLOB QPB_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.qpb.* )
-FILE(COPY ${PROTO_SRCS} ${PROTO_HDIR} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/proto/qpb/)
-message(${QPB_FILES})
+
+#message(${PROTO_SRCS} ${PROTO_HDIR})
 
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET ChatClient APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

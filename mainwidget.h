@@ -51,7 +51,7 @@ public:
     // 
     //tab按钮切换
     void switchTabSession();
-    void switchTabSession(const QString& user_id);//用于点击好友跳转到会话
+    void switchToSession(const QString& user_id);//用于点击好友跳转到会话
     void switchTabFriend();
     void switchTabApply();
     void changeTabIconAction(MainWidget::ActiveTab& activeTab,MainWidget::ActiveTab tab);
