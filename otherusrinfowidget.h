@@ -21,6 +21,11 @@ public:
 
 protected:
 
+private: 
+	void clickSendMessageBtn();
+	void clickDeleteFriendBtn();
+	void clickAddFriendBtn();
+
 private:
 	QPushButton* avatar;
 	QLabel* id_tab;
@@ -36,5 +41,6 @@ private:
 
 	QGridLayout* layout;
 
+	model::UserInfo info;
 
 };

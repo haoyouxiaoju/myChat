@@ -65,10 +65,17 @@ public:
     // 点击会话列表item 触发加载会话消息 ---- 好友列表也使用此函数
     void loadRecentMessages(const QString& chat_session_id);
 
+public:
+    //
     void updataFriendList();
     void updataChatSessionList();
     void updataFriendApplyList();
     void updateRecentMessages(const QString& chat_session_d);
+
+    //获取消息会话展示widget
+    MessageShowArea* getMessageShowArea();
+
+
 protected:
     void mousePressEvent(QMouseEvent* event) override;
 private:

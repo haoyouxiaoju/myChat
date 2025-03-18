@@ -1,8 +1,12 @@
 #include "sessionfriendarea.h"
 #include "mainwidget.h"
 
+#include "model/datacenter.h"
 
+#include "toast.h"
 #include "debug.h"
+
+using namespace model;
 
 SessionFriendArea::SessionFriendArea(QWidget* parent)
     :QScrollArea(parent),selected_item(nullptr)
@@ -100,7 +104,8 @@ void SessionFriendArea::addItem(ItemType type,const QString& id, const QIcon &av
 
 void SessionFriendArea::addItem(ItemType type,const model::UserInfo& info)
 {
-    this->addItem(type, info.userId, info.avatar, info.nickname,"");
+    DataCenter* dataCenter = DataCenter::getInstance();
+    this->addItem(type, info.userId, dataCenter->getIcon(info.avatar), info.nickname,"");
 }
 
 void SessionFriendArea::addItem(ItemType type, const model::ChatSessionInfo& info) {
@@ -142,6 +147,7 @@ void SessionFriendArea::clickItem(int index)
     SessionFriendItem* SFitem = dynamic_cast<SessionFriendItem*> (item->widget());
     SFitem->select();
 
+
 }
 
 SessionFriendItem::SessionFriendItem(SessionFriendArea* owner, const QIcon &avatar, const QString &name, const QString &lastMessage)
@@ -165,7 +171,7 @@ SessionFriendItem::SessionFriendItem(SessionFriendArea* owner, const QIcon &avat
 
     nameLabel = new QLabel(name);
     nameLabel->setFixedHeight(30);
-    nameLabel->setStyleSheet("QLabel { font-size: 18px; font-weight: 600; }");
+    nameLabel->setStyleSheet("QLabel { font-size: 17px; font-weight: 500; }");
     nameLabel->setAlignment(Qt::AlignBottom);
 
 
@@ -242,6 +248,15 @@ SessionItem::SessionItem(SessionFriendArea *owner, const QString &chatSessionId,
     :SessionFriendItem(owner,avatar,name,lastMessage),
     chatSessionId(chatSessionId)
 {
+    DataCenter* dataCenter = DataCenter::getInstance();
+    //
+    connect(dataCenter, &DataCenter::updateLastMessage, this, &SessionItem::updateLastMessage);
+
+    //构造时获取是否有未读消息
+    int unread = dataCenter->getUnread(chatSessionId);
+    if (unread > 0) {
+        this->MessageLabel->setText(QString("[未读%1条").arg(unread) + lastMessage);
+    }
 
 }
 
@@ -249,9 +264,66 @@ void SessionItem::avtion()
 {
     LOG()<<"Session Item,chatSessionId="<<chatSessionId;
 
+    //清空未读消息数目,同时去除 原来中的 "未读消息"
+    QString text = MessageLabel->text();
+    static const QRegularExpression reg(R"(\[\S+\])");
+    MessageLabel->setText(text.replace(reg, ""));
+    // **
+    DataCenter* dataCenter = DataCenter::getInstance();
+    dataCenter->clearUnread(chatSessionId);
+
+
+    //加载此会话的消息内容
     MainWidget* m_widget = MainWidget::getInstance();
     m_widget->loadRecentMessages(chatSessionId);
-    
+}
+
+void SessionItem::updateLastMessage(const QString& chatSessionId)
+{
+    if (this->chatSessionId != chatSessionId) {
+        return;
+    }
+    DataCenter* dataCenter = DataCenter::getInstance();
+    QList<Message>* message_list = dataCenter->getRecentMessageList(chatSessionId);
+    if (message_list == nullptr || message_list->size() == 0) {
+        return;
+    }
+    const Message& lastMessage = message_list->back();
+    QString text;
+    //最后一条信息提示
+    switch (lastMessage.messageType) {
+    case MessageType::TEXT_TYPE: {
+        text = lastMessage.content;
+        break;
+    }
+    case MessageType::FILE_TYPE: {
+        text = "[文件]";
+        break;
+    }
+    case MessageType::SPEECH_TYPE:{
+        text = "[语音]";
+        break;
+    }
+	case MessageType::IMAGE_TYPE: {
+		text = "[图片]";
+        break;
+	}
+    default: {
+        text = "[未知类型]";
+        break;
+
+    }
+    }
+
+    if (chatSessionId != dataCenter->getCurrentChatSessionId()) {
+        int unreadCount = dataCenter->getUnread(chatSessionId);
+        this->MessageLabel->setText(QString("[未读%1条消息]").arg(unreadCount) + text);
+    }
+    else {
+        this->MessageLabel->setText(text);
+    }
+
+
 }
 
 /***** *****	会话item		***** *****/
@@ -294,12 +366,68 @@ FriendApplyItem::FriendApplyItem(SessionFriendArea *owner, const QString &userId
     QPushButton* agree = new QPushButton("同意");
     layout->addWidget(agree,1,2,1,3);
     QPushButton* disagree = new QPushButton("拒绝");
-    layout->addWidget(disagree,1,5,1,3);
+    layout->addWidget(disagree,1,6,1,3);
 
-
+	//同意好友申请
+	connect(agree, &QPushButton::clicked, this,&FriendApplyItem::acceptFriend);
+	//拒绝好友申请
+	connect(disagree, &QPushButton::clicked, this,&FriendApplyItem::rejectFriend);
 
 }
 
+void FriendApplyItem::acceptFriend()
+{
+    DataCenter* dataCenter = DataCenter::getInstance();
+    connect(dataCenter, &DataCenter::acceptFriendApplyDone, this,&FriendApplyItem::acceptFriendDone,Qt::UniqueConnection);
+	dataCenter->acceptFriendApplyAsync(userId);
+
+}
+void FriendApplyItem::acceptFriendDone(const QString& userId, const QString& reason)
+{
+	//非此item的用户好友申请
+	if (userId != this->userId) {
+		return;
+	}
+	//删除此item
+	QWidget* parent = this->parentWidget();
+	parent->layout()->removeWidget(this);
+
+    //进行通知
+	if (reason.isEmpty()) {
+		Toast::showMessage("已同意好友申请");
+	}
+	else {
+		Toast::showMessage("同意好友申请请求失败:" + reason);
+	}
+    //释放
+	 this->deleteLater();
+
+}
+void FriendApplyItem::rejectFriend()
+{
+	DataCenter* dataCenter = DataCenter::getInstance();
+	connect(dataCenter, &DataCenter::rejectFriendApplyDone, this, &FriendApplyItem::acceptFriendDone, Qt::UniqueConnection);
+	dataCenter->rejectFriendApplyAsync(userId);
+}
+void FriendApplyItem::rejectFriendDone(const QString& userId, const QString& reason)
+{
+	//非此item的用户好友申请
+	if (userId != this->userId) {
+		return;
+	}
+	//删除此item
+	QWidget* parent = this->parentWidget();
+	parent->layout()->removeWidget(this);
+	//进行通知
+	if (reason.isEmpty()) {
+		Toast::showMessage("已拒绝好友申请");
+	}
+	else {
+		Toast::showMessage("拒绝好友申请请求失败:" + reason);
+	}
+	//释放
+	this->deleteLater();
+}
 void FriendApplyItem::avtion()
 {
     LOG()<<"FriendApplyItem";

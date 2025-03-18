@@ -1,8 +1,8 @@
 ﻿#include "groupsessiondetailwidget.h"
 #include "debug.h"
 
-GroupSessionDetailWidget::GroupSessionDetailWidget(QWidget *parent)
-	: QDialog(parent)
+GroupSessionDetailWidget::GroupSessionDetailWidget(const model::ChatSessionInfo& sessionInfo, QWidget* parent)
+	: QDialog(parent), sessionInfo(sessionInfo)
 {
 	int thisHeight;
 	if (parent != nullptr) {
@@ -108,6 +108,7 @@ GroupSessionDetailWidget::GroupSessionDetailWidget(QWidget *parent)
 #endif
 
 }
+
 
 
 GroupSessionDetailWidget::~GroupSessionDetailWidget()

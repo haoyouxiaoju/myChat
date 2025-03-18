@@ -1,6 +1,7 @@
 ﻿#include "choosefrienddialog.h"
 #include <QPainter>
 #include "model/data.h"
+#include "model/datacenter.h"
 
 ChooseFriendDialog::ChooseFriendDialog(const QString& usrId,QWidget *parent)
 	: QDialog(parent),usrId(usrId)
@@ -10,7 +11,7 @@ ChooseFriendDialog::ChooseFriendDialog(const QString& usrId,QWidget *parent)
 	layout->setSpacing(0);
 	layout->setContentsMargins(0, 0, 0, 0);
 
-	this->setFixedSize(600, 440);
+	//this->setFixedSize(600, 440);
 	this->setWindowFlags(Qt::WindowCloseButtonHint );
 	this->setWindowFlags(Qt::FramelessWindowHint);
 	this->setAttribute(Qt::WA_DeleteOnClose);
@@ -20,12 +21,24 @@ ChooseFriendDialog::ChooseFriendDialog(const QString& usrId,QWidget *parent)
 	initLeftWidget();
 	//已选中好友
 	initRightWidget();
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+	//总好友列表添加
+	QList<model::UserInfo>* friendList = dataCenter->getFriendList();
+	for (auto& friendInfo : *friendList) {
+		if (friendInfo.userId == usrId) {
+			addFriend(friendInfo.userId, dataCenter->getIcon(friendInfo.avatar), friendInfo.nickname, true);
+		}
+		addFriend(friendInfo.userId, dataCenter->getIcon(friendInfo.avatar), friendInfo.nickname, false);
+	}
+	
 	//debug
+#if TEXT_UI
 	addFriend("hayouxiaoju", QIcon(":/resource/images/xiaoju.jpg"),"haoyouxiaojuhohohohohohohoh",false);
 	addFriend("hayouxiaoju", QIcon(":/resource/images/xiaoju.jpg"),"haoyouxiaojuhohohohohohohoh",false);
 	addFriend("hayouxiaoju", QIcon(":/resource/images/xiaoju.jpg"),"haoyouxiaojuhohohohohohohoh",false);
 	addFriend("hayouxiaoju", QIcon(":/resource/images/xiaoju.jpg"),"haoyouxiaojuhohohohohohohoh",false);
 	addFriend("hayouxiaoju", QIcon(":/resource/images/xiaoju.jpg"),"haoyouxiaojuhohohohohohohoh",false);
+#endif
 	//debug-end
 
 
@@ -106,7 +119,7 @@ void ChooseFriendDialog::initLeftWidget()
 	left_widget_scroll= new QWidget();
 	left_widget_scroll->setObjectName("LeftWidget");
 	left_widget_scroll->setStyleSheet("#LeftWidget{background-color:rgb(255,255,255)}");
-	left_widget_scroll->setFixedSize(280, 440);
+	//left_widget_scroll->setFixedSize(280, 440);
 
 	QVBoxLayout* left_layout = new QVBoxLayout();
 	left_layout->setSpacing(0);

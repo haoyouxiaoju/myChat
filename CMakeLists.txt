@@ -9,7 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-list(APPEND CMAKE_PREFIX_PATH  D:/Programs/vcpkg/installed/x64-windows/ )
+list(APPEND CMAKE_PREFIX_PATH  D:/download/vcpkg-master/installed/x64-windows )
 #list(APPEND CMAKE_PREFIX_PATH   "D:/install/protoc")
 #find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Protobuf)
 
@@ -102,6 +102,7 @@ set_target_properties(ChatClient PROPERTIES
 )
 
 include(GNUInstallDirs)
+include_directories(${CMAKE_BINARY_DIR})
 install(TARGETS ChatClient
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

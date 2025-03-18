@@ -17,8 +17,8 @@ message GetSingleFileReq{
 message GetSingleFileRsp{
     string request_id =1;
     bool success =2;
-    string errmsg=3;
-    FileDownLoadData file_data=4;
+    optional string errmsg=3;
+    optional FileDownLoadData file_data=4;
 }
 
 
@@ -33,7 +33,7 @@ message GetMultiFileReq {
 message GetMultiFileRsp{
     string request_id =1;
     bool success =2;
-    string errmsg=3;
+    optional string errmsg=3;
     map<string,FileDownLoadData> file_data=4;
 }
 
@@ -48,8 +48,8 @@ message PutSingleFileReq {
 message PutSingleFileRsp {
     string request_id =1;
     bool success =2;
-    string errmsg=3;
-    FileMessageInfo file_info =4;
+    optional string errmsg=3;
+    optional FileMessageInfo file_info =4;
 }
 
 //
@@ -63,7 +63,7 @@ message PutMultiFileReq {
 message PutMultiFileRsp {
     string request_id =1;
     bool success =2;
-    string errmsg=3;
+    optional string errmsg=3;
     repeated FileMessageInfo file_info =4;
 }
 

@@ -1,6 +1,11 @@
 ﻿#include "messageshowarea.h"
 #include "debug.h"
 #include <QTimer>
+#include <QBuffer>
+#include <QImageWriter>
+#include <QMap>
+#include "model/datacenter.h"
+#include "mainwidget.h"
 
 
 MessageShowArea::MessageShowArea(QWidget * parent):
@@ -23,6 +28,7 @@ MessageShowArea::MessageShowArea(QWidget * parent):
     this->setStyleSheet("QScrollArea{border:none}");
     this->setWidget(container);
 
+     
 	//debug
 #if TEXT_UI
 
@@ -68,6 +74,13 @@ void MessageShowArea::addItem(bool isLeft, const model::Message& message)
     
 }
 
+void MessageShowArea::addFrontItem(bool isLeft, const model::Message& message)
+{
+    MessageShowItem* item = MessageShowItem::MakeMessageItem(isLeft, message);
+    QVBoxLayout* layout = dynamic_cast<QVBoxLayout*>(container->layout());
+    layout->insertWidget(0, item);
+}
+
 void MessageShowArea::clear()
 {
     QLayout* layout = this->container->layout();
@@ -85,11 +98,14 @@ void MessageShowArea::clear()
 MessageShowItem::MessageShowItem(bool isLeft)
     :QWidget(),isLeft(isLeft)
 {
+    
 
 }
 
 MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Message &message)
 {
+    
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
     MessageShowItem* item = new MessageShowItem(isLeft);
     item->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
 
@@ -100,14 +116,21 @@ MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Mess
     item->setLayout(gridLayout);
 
     QPushButton*  avatar_Button = new QPushButton();
-    avatar_Button->setIcon(message.sender.avatar);
+
+    //对于已有一样头像数据的icon则不再使用message中的icon,而是直接用__avatar中的icon
+       
+    avatar_Button->setIcon(dataCenter->getIcon(message.sender.avatar));
+
+
     avatar_Button->setFixedSize(35,35);
     avatar_Button->setIconSize(QSize(35, 35));
     avatar_Button->setStyleSheet("QPushButton{ border:none;background-color:transparent }");
     if(isLeft){
         gridLayout->addWidget(avatar_Button,0,0,2,1,Qt::AlignLeft|Qt::AlignTop);
     }else{
+
         gridLayout->addWidget(avatar_Button,0,1,2,1,Qt::AlignLeft|Qt::AlignTop);
+
     }
 
     QLabel* senderName_And_Date = new QLabel();
@@ -121,6 +144,14 @@ MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Mess
         gridLayout->addWidget(senderName_And_Date,0,1);
     }else{
         gridLayout->addWidget(senderName_And_Date,0,0,Qt::AlignRight);
+        //用户修改名称成功后调整名称
+        connect(dataCenter, &model::DataCenter::changeNickNameDone,item , [senderName_And_Date,dataCenter,message]() {
+            senderName_And_Date->setText(dataCenter->getMySelf()->nickname + "|" + message.time);
+            });
+        //用户修改头像成功后触发
+        connect(dataCenter, &model::DataCenter::changeAvatarDone, item, [avatar_Button, dataCenter]() {
+            avatar_Button->setIcon(dataCenter->getIcon(dataCenter->getMySelf()->avatar));
+            });
     }
 
     QWidget* messageStruct = nullptr;
@@ -148,7 +179,8 @@ MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Mess
         gridLayout->addWidget(messageStruct,1,0);
     }
 	connect(avatar_Button, &QPushButton::clicked, item, [item, message]() {
-		OtherUsrInfoWidget userInfo(message.sender);
+        MainWidget* mainWidget = MainWidget::getInstance();
+		OtherUsrInfoWidget userInfo(message.sender,mainWidget);
 		QPoint globalPos = QCursor::pos();
 		userInfo.move(globalPos.x(), globalPos.y());
 		userInfo.exec();
@@ -227,7 +259,7 @@ void MessageContent::paintEvent(QPaintEvent* event)
     
     int line_nums = (totalWidth / (width - 30)) + 1;
     if (line_nums == 1) {
-        width = totalWidth + 10;
+        width = totalWidth + 30;
     }
     int height = line_nums * (this->label->font().pixelSize() * 1.2) + 20;
 

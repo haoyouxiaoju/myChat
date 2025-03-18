@@ -76,7 +76,7 @@ public:
     QString nickname;			//用户昵称
     QString description;		//用户签名
     QString phone;				//手机号码
-    QIcon avatar;				//用户头像
+    QByteArray avatar;				//用户头像
 
 public:
     //*
@@ -88,10 +88,16 @@ public:
         this->phone = info.phone();
         if (info.avatar().isEmpty()) {
             //如果没拿到头像数据
-            this->avatar = QIcon(":/resource/images/xiaoju.jpg");
+            QFile file(":/resource/images/xiaoju.jpg");
+            if (file.open(QIODevice::ReadOnly)) {
+                // 读取文件的全部二进制数据到 QByteArray 中
+                QByteArray binaryData = file.readAll();
+				this->avatar = binaryData;
+            }
+            file.close();
         }
         else {
-            this->avatar =makeQIcon(info.avatar());
+            this->avatar =info.avatar();
         }
     }
 
@@ -126,18 +132,18 @@ public:
 		this->time = formatTime(info.timeStamp());
 		this->sender.load(info.sender());
 		switch (info.data().messageType()) {
-		case chat_im::MessageTypeGadget::STRING: {
+        case chat_im::MessageTypeGadget::MessageType::STRING: {
 			this->messageType = MessageType::TEXT_TYPE;
 			this->content = info.data().stringMessage().content().toUtf8();
 			break;
 		}
-		case chat_im::MessageTypeGadget::IMAGE: {
+		case chat_im::MessageTypeGadget::MessageType::IMAGE: {
             this->messageType = MessageType::IMAGE_TYPE;
             this->fileId = info.data().imageMessage().fileId();
             this->content = info.data().imageMessage().imageContent();
             break;
 		}
-        case chat_im::MessageTypeGadget::FILE: {
+        case chat_im::MessageTypeGadget::MessageType::FILE: {
             this->messageType = MessageType::FILE_TYPE;
             this->fileId = info.data().fileMessage().fileId();
             this->fileName = info.data().fileMessage().fileName();
@@ -146,7 +152,7 @@ public:
             }
             break;
         }
-        case chat_im::MessageTypeGadget::SPEECH: {
+        case chat_im::MessageTypeGadget::MessageType::SPEECH: {
             this->messageType = MessageType::SPEECH_TYPE;
             this->fileId = info.data().speechMessage().fileId();
             if (info.data().speechMessage().hasFileContents()) {

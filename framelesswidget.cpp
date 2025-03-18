@@ -23,6 +23,7 @@ FramelessWidget::FramelessWidget(QWidget* parent)
 	
 	border = new TransparentBorder();//并没有让border挂在this下面,所以得析构时得delete
 	border->hide();
+	border->setBorderColor(QColor(215, 58, 73));
 
 }
 

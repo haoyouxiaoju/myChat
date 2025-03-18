@@ -18,6 +18,13 @@ namespace model {
 		recentMessages = new QHash<QString, QList<Message>>();
 		unreadMessageCount = new QHash<QString, int>();
 
+		netClient.initWebSocket();
+		
+	//保存头像,由于每次接受消息都会接受到一个头像数据,但头像数据大部分情况下都已出现过,
+	//又因重新接受导致新icon出现,从而内存占比大幅增加
+	//所以考虑用map来处理,减少icon的内存消耗
+		__avatar = new QMap<QByteArray, QIcon>();
+
 
 	}
 
@@ -136,6 +143,19 @@ namespace model {
 
 	}
 
+	const QIcon& DataCenter::getIcon(const QByteArray& data)
+	{
+		auto item = __avatar->find(data);
+		if (item != __avatar->end()) {
+			return item.value();
+		}
+		else {
+		//此数据还有有创建icon,则创建icon并填入
+			(*__avatar)[data] = makeQIcon(data);
+			return (*__avatar)[data];
+		}
+	}
+
 	ChatSessionInfo* DataCenter::findChatSessionByUserId(const QString& userId)
 	{
 		if (this->chatSessionList == nullptr) {
@@ -174,9 +194,63 @@ namespace model {
 
 	}
 
-	QString DataCenter::getLoginSessionId()
+	const QString& DataCenter::getLoginSessionId()
 	{
 		return this->loginSessionId;
+	}
+
+	const QString& DataCenter::getVerifyCodeId()
+	{
+		return this->currentVerifyCodeId;
+	}
+
+	UserInfo* DataCenter::getFriendById(const QString& user_id)
+	{
+		//如果friendList为空,则直接返回
+		if (this->friendList == nullptr) {
+			this->getFriendListAsync();
+			return nullptr;
+		}
+		//遍历查找
+		for (auto& i : *this->friendList) {
+			if (i.userId == user_id) {
+				return &i;
+			}
+		}
+		return nullptr;
+
+	}
+
+	UserInfo DataCenter::removeFromApplyList(const QString& user_id)
+	{
+		if (this->applyList == nullptr) {
+			return UserInfo();
+		}
+		for (int i = 0; i < this->applyList->size(); ++i) {
+			if (this->applyList->at(i).userId == user_id) {
+				UserInfo info =this->applyList->at(i);
+				this->applyList->removeAt(i);
+				return info;
+			}
+		}
+		return UserInfo();
+	}
+
+	ChatSessionInfo* DataCenter::findChatSessionBySessionId(const QString& chat_session_id)
+	{
+		//如果chatSessionList为空,则直接返回
+		if (chatSessionList == nullptr) {
+			this->getChatSessionListAsync();
+			return nullptr;
+		}
+		//遍历查找
+		for (auto i = chatSessionList->begin(); i != chatSessionList->end(); ++i) {
+			if ((*i).chatSessionId == chat_session_id) {
+				return &(*i);
+			}
+		}
+		return nullptr;
+	
 	}
 
 
@@ -228,6 +302,7 @@ namespace model {
 	{
 		return this->friendList;
 	}
+
 
 	void DataCenter::resetChatSessionList(std::shared_ptr<chat_im::GetChatSessionListRsp> session_list)
 	{
@@ -327,6 +402,149 @@ namespace model {
 			return nullptr;
 		}
 		return &(*recentMessages)[chat_session_id];
+	}
+
+	void DataCenter::sendTextMessageAsync(const QString& chat_session_id, const QString& body)
+	{
+		netClient.sendMessage(loginSessionId, chat_session_id, model::MessageType::TEXT_TYPE, body.toUtf8());
+	}
+
+	const Message& DataCenter::addMessage(const Message& message)
+	{
+		const QString& chatSessionId = message.chatiSessionId;
+		(*recentMessages)[chatSessionId].push_back(message);
+		return (*recentMessages)[chatSessionId].back();
+	}
+
+	void DataCenter::clearUnread(const QString& chatSessionId)
+	{
+		(*unreadMessageCount)[chatSessionId] = 0;
+		//
+		saveDataFile();
+	}
+
+	void DataCenter::addUnread(const QString& chatSessionId)
+	{
+		++(*unreadMessageCount)[chatSessionId];
+		//
+		saveDataFile();
+	}
+
+	int DataCenter::getUnread(const QString& chatSessionId)
+	{
+
+		return (*unreadMessageCount)[chatSessionId];
+	}
+
+	void DataCenter::receiveMessage(const QString& chatSessionId)
+	{
+		//如果收到的消息所属会话不是当前所选中的消息会话,则不展示处理
+		if (chatSessionId != currentChatSessionId) {
+			addUnread(chatSessionId);
+		}
+		else {
+			//展示
+			//获取最后一天消息
+			const Message& lastMessage = (*recentMessages)[chatSessionId].back();
+			//通知 界面添加一条新消息
+			emit this->receiveMessageDone(lastMessage);
+		}
+		//再发送信号,更新会话列表中的显示lastMessage
+		emit this->updateLastMessage(chatSessionId);
+	}
+
+	void DataCenter::changeNickNameAsync(const QString& nickName)
+	{
+		netClient.changeNickName(loginSessionId,nickName);
+	}
+
+	void DataCenter::changeDescriptionAsync(const QString& newDesc)
+	{
+		netClient.changeDescription(loginSessionId, newDesc);
+	}
+
+	void DataCenter::changePhoneAsync(const QString& newPhone, const QString& verifyCodeId, const QString& verifyCode)
+	{
+		netClient.changePhone(loginSessionId, newPhone,verifyCodeId,verifyCodeId);
+	}
+
+	void DataCenter::getVerifyCodeAsync(const QString& phone)
+	{
+		netClient.getVerifyCode(phone);
+	}
+
+	void DataCenter::changeAvatarAsync(const QByteArray& body)
+	{
+		netClient.changeAvatar(loginSessionId,body);
+	}
+
+	void DataCenter::deleteFriendAsync(const QString& userId)
+	{
+		netClient.deleteFriend(loginSessionId,userId);
+	}
+
+	void DataCenter::addFriendApplyAsync(const QString& userId)
+	{
+		netClient.addFriendApply(loginSessionId, userId);
+	}
+
+	void DataCenter::acceptFriendApplyAsync(const QString& userId)
+	{
+		netClient.acceptFriendApply(loginSessionId, userId);
+	}
+
+	void DataCenter::rejectFriendApplyAsync(const QString& userId)
+	{
+		netClient.rejectFriendApply(loginSessionId, userId);
+	}
+
+	
+
+	void DataCenter::resetNickName(const QString& nickName)
+	{
+		this->myself->nickname = nickName;
+	}
+
+	void DataCenter::resetDescription(const QString& description)
+	{
+		this->myself->description = description;
+	}
+	void DataCenter::resetPhone(const QString& phone) {
+		this->myself->phone = phone;
+	}
+
+	void DataCenter::resetVerifyCodeId(const QString& id)
+	{
+		this->currentVerifyCodeId = id;
+	}
+
+	void DataCenter::resetAvatar(const QByteArray& body)
+	{
+		this->myself->avatar = body;
+	}
+
+	void DataCenter::removeFriend(const QString& id)
+	{
+		if (friendList == nullptr) {
+			this->getFriendListAsync();
+			return;
+		}
+		
+		friendList->removeIf([id](const UserInfo& userInfo) {
+			return userInfo.userId == id;
+			});
+
+		chatSessionList->removeIf([id,this](const ChatSessionInfo& info) {
+			if (info.userId != id || info.userId == "") {
+				return false;
+			}
+			if (info.chatSessionId == this->currentChatSessionId) {
+				emit this->clearCurrentSession();
+			}
+			return true;
+
+
+			});
 	}
 
 }

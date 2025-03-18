@@ -7,6 +7,10 @@
 *.userosscache
 *.sln.docstates
 
+# ignore qpb
+*.qpb.cpp
+*.qpc.h
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

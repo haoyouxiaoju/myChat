@@ -21,7 +21,7 @@ class NetClient : public QObject
 	Q_OBJECT
 #if TEXT_SERVER
 	const QString HTTP_URL = "http://127.0.0.1:8000";
-	const QString WEBSOCKET_URL = "http://127.0.0.1:8001/ws";
+	const QString WEBSOCKET_URL = "ws://127.0.0.1:8001/ws";
 
 #else
 	const QString HTTP_URL = "http://127.0.0.1:8000";
@@ -46,12 +46,33 @@ public:
 	void getApplyList(const QString& login_session_id);
 	void getRecentMessage(const QString& login_session_id, const QString& chat_session_id,bool updataUi);
 
+	//发送消息
+	void sendMessage(const QString& loginSessionId, const QString& chatSessionId, model::MessageType type, const QByteArray& body, const QString& extraInfo = "");
+
+	//修改昵称请求
+	void changeNickName(const QString& loginSessionId, const QString& nickName);
+	void changeDescription(const QString& loginSessionID, const QString& newDesc);
+
+	//修改手机号
+	void changePhone(const QString& loginSessionId, const QString& newPhone, const QString& verifyCodeId,const QString& verifyCode);
+	//获取验证码
+	void getVerifyCode(const QString& phone);
+	void changeAvatar(const QString& loginSessionId, const QByteArray& body);
+	//删除好友
+	void deleteFriend(const QString& loginSessionId, const QString& userId);
+	//发送好友申请
+	void addFriendApply(const QString& loginSessionId, const QString& userId);
+	//同意好友申请
+	void acceptFriendApply(const QString& loginSessionId, const QString& userId);
+	//拒绝好友申请
+	void rejectFriendApply(const QString& loginSessionId, const QString& userId);
+
 	//
 	// 生成一个请求id
 	static QString makeRequestId();
 
-private:
 	void initWebSocket();
+private:
 	void sendAuthentication();
 	QNetworkReply* sendHttpRequest(const QString& api_path,const QByteArray& body);
 

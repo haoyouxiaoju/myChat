@@ -1,5 +1,10 @@
 ﻿#include "messageeditarea.h"
 #include "messagehistorywidget.h"
+#include "mainwidget.h"
+
+#include "toast.h"
+
+using namespace model;
 
 MessageEditArea::MessageEditArea(QWidget *parent)
     : QWidget{parent},owner(parent)
@@ -82,5 +87,72 @@ MessageEditArea::MessageEditArea(QWidget *parent)
         w->show();
 
         });
+    this->initSignalSlot();
 
+}
+
+void MessageEditArea::initSignalSlot()
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+
+    //处理按钮点击
+    connect(sendBtn, &QPushButton::clicked, this, &MessageEditArea::sendTextMessage);
+    //
+    connect(dataCenter, &DataCenter::sendMessageDone, this, &MessageEditArea::addSelfMessage);
+    //发送消息
+    connect(dataCenter, &DataCenter::sendMessageFailed, this, [](const QString& reason) {
+        Toast::showMessage("发送消息失败:" + reason);
+        });
+    //处理服务端转发来的会话消息
+    connect(dataCenter, &DataCenter::receiveMessageDone, this, &MessageEditArea::addOtherMessage);
+}
+
+void MessageEditArea::sendTextMessage()
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    
+    if (dataCenter->getCurrentChatSessionId().isEmpty()) {
+        LOG() << "当前未选中聊天会话,不发送任何消息";
+        Toast::showMessage("当前未选中聊天会话,不发送任何消息");
+        return;
+    }
+
+    QString content = edit->toPlainText().trimmed();
+    if (content.isEmpty()) {
+        LOG() << "输入框未空,不发送消息";
+        return;
+    }
+
+    edit->setPlainText("");
+    dataCenter->sendTextMessageAsync(dataCenter->getCurrentChatSessionId(), content);
+}
+
+void MessageEditArea::addSelfMessage(model::MessageType type, const QByteArray& body, const QString& extraInfo)
+{
+    DataCenter* dataCenter = DataCenter::getInstance();
+
+    const Message& message = dataCenter->addMessage(Message::MakeMessage(type, dataCenter->getCurrentChatSessionId(), *dataCenter->getMySelf(), body, extraInfo));
+
+    MainWidget* mainWidget = dynamic_cast<MainWidget*>(owner);
+    MessageShowArea* messageShowArea = mainWidget->getMessageShowArea();
+    messageShowArea->addItem(false, message);
+
+    messageShowArea->scrollToEndLater();
+
+    emit dataCenter->updateLastMessage(dataCenter->getCurrentChatSessionId());
+
+}
+
+void MessageEditArea::addOtherMessage(const model::Message& message)
+{
+    //把这个消息显示到界面
+    MainWidget* mainWidget = dynamic_cast<MainWidget*>(owner);
+    MessageShowArea* messageShowArea = mainWidget->getMessageShowArea();
+
+    messageShowArea->addItem(true, message);
+
+    messageShowArea->scrollToEndLater();
+    Toast::showMessage("收到一条新消息");
+
+    
 }

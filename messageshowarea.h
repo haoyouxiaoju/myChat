@@ -29,6 +29,8 @@ public:
     
     //尾插
     void addItem(bool isLeft, const model::Message& message);
+    //头插
+    void addFrontItem(bool isLeft, const model::Message& message);
     void clear();
 
 private:
@@ -51,6 +53,7 @@ private:
 
 private:
     bool isLeft;
+
 
 };
 

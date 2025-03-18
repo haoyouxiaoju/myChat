@@ -101,6 +101,9 @@ protected:
     void avtion() override;
 
 private:
+    void updateLastMessage(const QString& chatSessionId);
+
+private:
     QString chatSessionId;
 
 };
@@ -130,6 +133,15 @@ class FriendApplyItem : public SessionFriendItem{
     Q_OBJECT
 public:
     FriendApplyItem(SessionFriendArea* owner ,const QString& userId, const QIcon& avatar , const QString& name );
+
+private:
+    //接受好友申请
+    void acceptFriend();
+	void acceptFriendDone(const QString& userId,const QString& reason);
+	//拒绝好友申请
+	void rejectFriend();
+	void rejectFriendDone(const QString& userId, const QString& reason);
+
 
 protected:
     void avtion() override;

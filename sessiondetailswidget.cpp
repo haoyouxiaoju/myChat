@@ -1,5 +1,7 @@
 ﻿#include "sessiondetailswidget.h"
 #include "debug.h"
+#include "model/datacenter.h"
+#include <QMessageBox>
 
 SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& sessionInfo,QWidget *parent)
 	: QDialog(parent),sessionInfo(sessionInfo)
@@ -92,6 +94,31 @@ SessionDetailsWidget::SessionDetailsWidget(const model::ChatSessionInfo& session
 	deleteFriendButton->setStyleSheet("QPushButton{color:red;font-size:15px;border:none;}");
 	layout->addWidget(deleteFriendButton, Qt::AlignCenter | Qt::AlignTop);
 
+	//获取单聊的好友信息
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+	model::UserInfo* userInfo = dataCenter->getFriendById(sessionInfo.userId);
+	addAvatarItem(dataCenter->getIcon(userInfo->avatar), userInfo->nickname);
+	AvatarItem* item = new AvatarItem(QIcon(":/resource/images/more.png"), "添加");
+	addAvatarItem(item);
+	connect(item->avatar_button, &QPushButton::clicked, this, []() {
+		ChooseFriendDialog* dialog = new ChooseFriendDialog("haoyouxiaoju");
+		dialog->exec();
+
+		});
+
+
+	//删除好友
+	connect(deleteFriendButton, &QPushButton::clicked, this, [this,userInfo]() {
+		//弹出确认框
+		auto result = QMessageBox::warning(this, "删除好友", "确定删除好友吗？", QMessageBox::Yes | QMessageBox::No);
+		if (result == QMessageBox::No) {
+			return;
+		}
+		//删除好友
+		model::DataCenter* dataCenter = model::DataCenter::getInstance();
+		dataCenter->deleteFriendAsync(userInfo->userId);
+		this->close();
+		});
 	//debug
 #if TEXT_UI
 	addAvatarItem(QIcon(":/resource/images/xiaoju.jpg"), "haoyouxiaoju");
@@ -203,7 +230,7 @@ AvatarItem::AvatarItem(const QIcon& icon, const QString& name, QWidget* parent)
 	avatar_button->setIconSize(QSize(45, 45));
 	avatar_button->setIcon(icon);
 	avatar_button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-	avatar_button->setStyleSheet("QPushButton{border:1px solid rgb(219, 219, 219);background-color:transparent}");
+	avatar_button->setStyleSheet("QPushButton{border:0px solid rgb(219, 219, 219);background-color:transparent}");
 	layout->addWidget(avatar_button,0,Qt::AlignCenter);
 
 

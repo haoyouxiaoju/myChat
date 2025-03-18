@@ -10,6 +10,8 @@
 #include <QScrollBar>
 #include <QLabel>
 
+#include "model/datacenter.h"
+
 
 class MessageEditArea : public QWidget
 {
@@ -24,6 +26,21 @@ public:
     QPushButton* sendFileBtn;
     QPushButton* sendSoundBtn;
     QPushButton* showHitstoryBtn;
+
+private:
+
+    //初始化槽和信号
+    void initSignalSlot();
+
+    //发送文本消息
+    void sendTextMessage();
+
+    //把消息添加到消息显示区
+    void addSelfMessage(model::MessageType type, const QByteArray& body, const QString& extraInfo);
+
+    //处理其他人发来的消息
+    void addOtherMessage(const model::Message& message);
+
 
 private:
     QWidget* owner;

@@ -10,7 +10,7 @@ class GroupSessionDetailWidget  : public QDialog
 	Q_OBJECT
 
 public:
-	GroupSessionDetailWidget(QWidget *parent);
+	GroupSessionDetailWidget(const model::ChatSessionInfo& sessionInfo, QWidget *parent);
 	~GroupSessionDetailWidget();
 
 	void addAvatarItem(const QIcon& icon, const QString& name);

@@ -34,12 +34,19 @@ namespace model {
 		//如果文件和文件夹不存在则创建文件夹和文件，文件通过initDataFile()进行创建且初始化内容
 		void loadDataFile(); 
 
+		const QIcon& getIcon(const QByteArray& data);
+
 		ChatSessionInfo* findChatSessionByUserId(const QString& userId);
 
 		void topChatSessionInfo(const ChatSessionInfo& chat_session_info);
 
 
-		QString getLoginSessionId();
+		const QString& getLoginSessionId();
+		const QString& getVerifyCodeId();
+		UserInfo* getFriendById(const QString& user_id);
+		UserInfo removeFromApplyList(const QString& user_id);
+		ChatSessionInfo* findChatSessionBySessionId(const QString& chat_session_id);
+
 
 		//
 		//获取用户自身信息
@@ -77,7 +84,48 @@ namespace model {
 		void resetRecentMessage(const QString& chat_session_id,std::shared_ptr<chat_im::GetRecentMsgRsp> recentMessage_list);
 		void getRecentMessageAsync(const QString& chat_session_id,bool updataUi);
 		QList<model::Message>* getRecentMessageList(const QString& chat_session_id);
+
+		//发送消息
+		void sendTextMessageAsync(const QString& chat_session_id, const QString& body);
+		const Message& addMessage(const Message& message);
 		
+		//未读消息数据处理
+		void clearUnread(const QString& chatSessionId);
+		void addUnread(const QString& chatSessionId);
+		int getUnread(const QString& chatSessionId);
+
+		//收到服务器发来的消息
+		void receiveMessage(const QString& chatSessionId);
+
+		//修改用户昵称
+		void changeNickNameAsync(const QString& nickName);
+		//修改用户签名
+		void changeDescriptionAsync(const QString& newDesc);
+		//修改用户电话
+		void changePhoneAsync(const QString& newPhone,const QString& verifyCodeId,const QString& verifyCode);
+		void getVerifyCodeAsync(const QString& phone);
+
+		//修改头像
+		void changeAvatarAsync(const QByteArray& body);
+		//删除好友
+		void deleteFriendAsync(const QString& userId);
+		//发送好友申请
+		void addFriendApplyAsync(const QString& userId);
+		//同意好友申请
+		void acceptFriendApplyAsync(const QString& userId);
+		//拒绝好友申请
+		void rejectFriendApplyAsync(const QString& userId);
+
+
+
+	public:
+		void resetNickName(const QString& nickName);
+		void resetDescription(const QString& description);
+		void resetPhone(const QString& phone);
+		void resetVerifyCodeId(const QString& id);
+		void resetAvatar(const QByteArray& body);
+		void removeFriend(const QString& id);
+
 
 	private:
 		DataCenter();
@@ -85,16 +133,30 @@ namespace model {
 
 	signals:
 		void getMySelfDone();//已获取用户自身信息完成
-	signals:
 		void getFriendListDone();//已获取好友列表信息完成
-	signals:
 		void getChatSessionListDone();
-	signals:
 		void getApplyListDone();
-	signals:
 		void getRecentMessageDone(const QString& chat_session_id);
-	signals:
 		void getRecentMessageDoneNotUi(const QString& chat_session_id);
+		void sendMessageFailed(const QString& err_msg);//发送消息失败
+		void sendMessageDone(model::MessageType type, const QByteArray& body, const QString& extraInfo);//发送消息结束
+		void updateLastMessage(const QString& chatSessionId);	//修改聊天会话列表中会话显示的最后一条消息
+		void receiveMessageDone(const Message& message);		//收到消息结束
+		void changeNickNameDone();		//修改用户昵称结束
+		void changeDescriptionDone();	//	修改用户签名结束
+		void changeUserPhoneDone();	//修改用户手机号结束
+		void getVerifyCodeDone();//修改用户手机号结束
+		void changeAvatarDone();//修改用户头像结束
+		void deleteFriendDone(const QString& user_id);//删除好友结束
+		void clearCurrentSession();
+		void addFriendApplyDone();//添加好友结束
+		void reveiveFriendApplyDone();//接收好友申请结束
+		void acceptFriendApplyDone(const QString& userId,const QString& errmsg);//接受好友申请结束
+		void rejectFriendApplyDone(const QString& userId, const QString& errmsg);//拒绝好友申请结束
+		void reveiveFriendProcessAccept(const UserInfo& userInfo);//接收到接受好友申请
+		void reveiveFriendProcessReject(const UserInfo& userInfo);//接受到拒绝好友申请
+
+
 
 
 
@@ -140,6 +202,7 @@ namespace model {
 
 		NetClient netClient;
 
+		QMap<QByteArray, QIcon>* __avatar;
 	};
 
 

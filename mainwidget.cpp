@@ -2,6 +2,8 @@
 #include "model/datacenter.h"
 #include <QList>
 
+#include "toast.h"
+
 
 MainWidget::MainWidget(QWidget *parent)
     : FramelessWidget(parent)
@@ -229,8 +231,8 @@ void MainWidget::initMainWidgetRight()
 
     vBoxLayout->addWidget(messageShowArea);
 
-    //消息输入界面
-    messageEditArea = new MessageEditArea();
+    //消息输入界面 后续会使用到主窗口里获取消息展示区
+    messageEditArea = new MessageEditArea(this);
 
     vBoxLayout->addWidget(messageEditArea,0,Qt::AlignBottom);
 
@@ -254,7 +256,7 @@ void MainWidget::initMainWidgetSignal()
     connect(applyTabBtn,&QPushButton::clicked,this,&MainWidget::switchTabApply);
     //点击个人头像 显示个人信息
     connect(userAvatar, &QPushButton::clicked, this, [this]() {
-		usrInfoWidget userInfo;
+		usrInfoWidget userInfo(this);
 		QPoint globalPos = QCursor::pos();
 		userInfo.move(globalPos.x(), globalPos.y());
 		userInfo.exec();
@@ -292,11 +294,37 @@ void MainWidget::initMainWidgetSignal()
 
 
     //更多
-    connect(more_Button, &QPushButton::clicked, this, [this]() {
+    connect(more_Button, &QPushButton::clicked, this, [this,dataCenter]() {
 
-		sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
+		//获取当前会话信息
+		model::ChatSessionInfo* sessionInfo = dataCenter->findChatSessionBySessionId(dataCenter->getCurrentChatSessionId());
+        if (sessionInfo == nullptr) {
+			LOG() << "当前会话不存在";
+			return;
+        }
+		//判断是单聊还是群聊
+        if (sessionInfo->userId != "") {
+			//单聊
+			model::UserInfo* userInfo = dataCenter->getFriendById(sessionInfo->userId);
+            if (userInfo == nullptr) {
+                LOG() << "当前会话对应的用户不存在";
+                return;
+            }
+			SessionDetailsWidget* sessionDetail_widget = new SessionDetailsWidget(*sessionInfo, this);
+			sessionDetail_widget->show_widget();
+			sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
+		}
+        else {
+			//群聊
+			GroupSessionDetailWidget* sessionDetail_widget = new GroupSessionDetailWidget(*sessionInfo, this);
+			sessionDetail_widget->show_widget();
+			sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
+        }
+
+
+		/*sessionDetail_widget = new SessionDetailsWidget((model::ChatSessionInfo()), this);
 		sessionDetail_widget->show_widget();
-		sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));
+		sessionDetail_widget->move(QPoint(this->x() + this->width(), this->y()));*/
 
 	/*	GroupSessionDetailWidget* sessionDetail_widget = new GroupSessionDetailWidget( this);
             sessionDetail_widget->show_widget();
@@ -309,11 +337,48 @@ void MainWidget::initMainWidgetSignal()
     //获取用户信息 --头像
     connect(dataCenter, &model::DataCenter::getMySelfDone, this, [dataCenter,this]() {
         const auto* myself = dataCenter->getMySelf();
-        this->userAvatar->setIcon(myself->avatar);
+        this->userAvatar->setIcon(dataCenter->getIcon(myself->avatar));
         });
     dataCenter->getMySelfAsync();
 
+    //用户修改头像成功触发
+    connect(dataCenter, &model::DataCenter::changeAvatarDone, this, [this,dataCenter]() {
+        this->userAvatar->setIcon(dataCenter->getIcon(dataCenter->getMySelf()->avatar));
+        });
 
+    //删除好友
+    connect(dataCenter, &model::DataCenter::deleteFriendDone, this,[this]() {
+        this->updataChatSessionList();
+        this->updataFriendList();
+        LOG() << "删除好友完成";
+        });
+    //清空当前会话的消息
+    connect(dataCenter, &model::DataCenter::clearCurrentSession, this, [this]() {
+        sessionName->setText("");
+        messageShowArea->clear();
+        LOG() << "删除好友为当前会话, 清空完成";
+        });
+
+    //发送好友申请
+	connect(dataCenter, &model::DataCenter::addFriendApplyDone, this, [this]() {
+        Toast::showMessage("好友申请发送成功");
+		});
+
+    //处理好友申请
+	connect(dataCenter, &model::DataCenter::reveiveFriendApplyDone, this, [this]() {
+		Toast::showMessage("收到好友申请");
+		updataFriendApplyList();
+		});
+	//接受到好友申请被同意
+	connect(dataCenter, &model::DataCenter::reveiveFriendProcessAccept, this, [this](const model::UserInfo& userInfo) {
+		Toast::showMessage("好友申请被同意");
+		updataFriendList();
+		});
+	//接受到好友申请被拒绝
+	connect(dataCenter, &model::DataCenter::reveiveFriendProcessReject, this, [this](const model::UserInfo& userInfo) {
+		Toast::showMessage("好友申请被拒绝");
+		});
+    // 
     //
     //dataCenter->getFriendListAsync()
 
@@ -385,6 +450,7 @@ void MainWidget::switchToSession(const QString& user_id)
 	dataCenter->topChatSessionInfo(*info);
 
 	switchTabSession();
+	this->updataChatSessionList();
     this->session_friendArea->clickItem(0);
 
 }
@@ -539,6 +605,11 @@ void MainWidget::updateRecentMessages(const QString& chat_session_id)
 
     dataCenter->setCurrentChatSessionId(chat_session_id);
 
+}
+
+MessageShowArea* MainWidget::getMessageShowArea()
+{
+    return this->messageShowArea;
 }
 
 void MainWidget::mousePressEvent(QMouseEvent* event)
