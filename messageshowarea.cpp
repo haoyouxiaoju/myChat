@@ -4,8 +4,15 @@
 #include <QBuffer>
 #include <QImageWriter>
 #include <QMap>
+#include <QFileInfo>
+#include <QDir>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QMenu>
 #include "model/datacenter.h"
 #include "mainwidget.h"
+#include "toast.h"
+#include "soundrecorder.h"
 
 
 MessageShowArea::MessageShowArea(QWidget * parent):
@@ -107,13 +114,14 @@ MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Mess
     
 	model::DataCenter* dataCenter = model::DataCenter::getInstance();
     MessageShowItem* item = new MessageShowItem(isLeft);
-    item->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
+    //item->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding));
 
     QGridLayout* gridLayout = new QGridLayout();
-    gridLayout->setVerticalSpacing(5);
-    gridLayout->setHorizontalSpacing(15);
-    gridLayout->setContentsMargins(0,0,0,0);
+    gridLayout->setVerticalSpacing(10);
+    gridLayout->setHorizontalSpacing(10);
+    gridLayout->setContentsMargins(10,0,10,0);
     item->setLayout(gridLayout);
+    item->setMinimumHeight(100);
 
     QPushButton*  avatar_Button = new QPushButton();
 
@@ -140,6 +148,7 @@ MessageShowItem *MessageShowItem::MakeMessageItem(bool isLeft, const model::Mess
     senderName_And_Date->setFont(little_Font);
     senderName_And_Date->setPalette(QPalette(QColor(178,178,178)));
     senderName_And_Date->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed));
+    senderName_And_Date->setAlignment(Qt::AlignBottom);
     if(isLeft){
         gridLayout->addWidget(senderName_And_Date,0,1);
     }else{
@@ -201,30 +210,28 @@ QWidget *MessageShowItem::makeTextMessageItem(const QByteArray &content, bool is
 
 QWidget *MessageShowItem::makeImageMessageItem(const QString &fileId, const QByteArray &content, bool isLeft)
 {
-    QWidget* res_Widget = new QWidget();
-
+    QWidget* res_Widget = new MessageImage(fileId,content,isLeft);
     return res_Widget;
 
 }
 
 QWidget *MessageShowItem::makeFileMessageItem(const QString &fileId, const QByteArray &content, bool isLeft, const QString &fileName)
 {
-    QWidget* res_Widget = new QWidget();
-
+    QWidget* res_Widget = new MessageContent(model::FILE_TYPE,"[文件]"+fileName,fileId,content,isLeft);
     return res_Widget;
 
 }
 
 QWidget *MessageShowItem::makeSoundMessgaeItem(const QString &fileId, const QByteArray &content, bool isLeft)
 {
-    QWidget* res_Widget = new QWidget();
+    QWidget* res_Widget = new MessageContent(model::SPEECH_TYPE,"[语音]"+fileId,fileId,content,isLeft);
 
     return res_Widget;
 
 }
 
 MessageContent::MessageContent(model::MessageType type, const QString& text, const QString& fileId, const QByteArray& content, bool isLeft)
-    :type(type),fileId(fileId),content(content),isLeft(isLeft)
+	:type(type), fileId(fileId), content(content), isLeft(isLeft), status(false), fileName("")
 {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -240,6 +247,24 @@ MessageContent::MessageContent(model::MessageType type, const QString& text, con
     this->label->setWordWrap(true);
     this->label->setStyleSheet("QLabel{padding:0 10px;line-height:1.2;background-color:transparent;}");
 
+	if (type == model::TEXT_TYPE) {
+        return;
+	}
+	if (content.isEmpty()) {
+		model::DataCenter* dataCenter = model::DataCenter::getInstance();
+		connect(dataCenter, &model::DataCenter::getSingleFileDone, this, &MessageContent::updateUI, Qt::UniqueConnection);
+		dataCenter->getSingleFileAsync(fileId);
+	}
+
+}
+
+void MessageContent::updateUI(const QString& fileId, const QByteArray& content)
+{
+	if (fileId != this->fileId) {
+		return;
+	}
+	this->content = content;
+	this->update();
 }
 
 void MessageContent::paintEvent(QPaintEvent* event)
@@ -306,5 +331,171 @@ void MessageContent::paintEvent(QPaintEvent* event)
 
 
 }
+
+void MessageContent::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton) {
+        if (type == model::FILE_TYPE) {
+			if (content.isEmpty()) {
+				Toast::showMessage("文件加载中,请稍后再试");
+			    return;
+			}
+            //未保存,则保存
+            if (status == false) {
+                saveFile(content);
+            }
+            else {
+                //调用系统命令打开文件
+                openFileWithSystemDefaultApp(fileName);
+            }
+
+        }
+        else if (type == model::SPEECH_TYPE) {
+            if (content.isEmpty()) {
+                Toast::showMessage("数据加载中");
+                return;
+            }
+            SoundRecorder* recorder = SoundRecorder::getInstance();
+            connect(recorder, &SoundRecorder::soundPlayDone, this, [this]() {
+                label->setText("[语音]");
+                });
+            label->setText("播放中...");
+            recorder->startPlay(content);
+        }
+        else {
+            LOG() << "未知类型,不支持点击";
+        }
+	}
+	else if (event->button() == Qt::RightButton) {
+		LOG() << "右键点击";
+    }
+    else {
+        LOG() << "未知点击";
+    }
+
+}
+
+void MessageContent::contextMenuEvent(QContextMenuEvent* event)
+{
+    if (type != model::SPEECH_TYPE) {
+        LOG() << "非语音消息,暂时不支持菜单";
+        return;
+    }
+    QMenu* menu = new QMenu(this);
+    QAction* action = menu->addAction("语音转文字");
+    connect(action, &QAction::triggered, this, [this]() {
+        speechRecognition();
+        });
+    menu->exec(event->globalPos());
+    delete menu;
+
+}
+
+// 通过系统默认程序打开文件
+void  MessageContent::openFileWithSystemDefaultApp(const QString& filePath) {
+    QFileInfo fileInfo(filePath);
+    if (!fileInfo.exists()) {
+        qDebug() << "File does not exist:" << filePath;
+        return;
+    }
+    // 使用 QDesktopServices 打开文件
+    bool success = QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+    if (!success) {
+        qDebug() << "Failed to open file with default application.";
+    }
+}
+
+void MessageContent::saveFile(const QByteArray& content)
+{
+	QString filePath = QFileDialog::getSaveFileName(this, "另存为", QDir::homePath(),"*"); 
+	if (filePath.isEmpty()) {
+		LOG() << "未选择文件保存路径";
+        return;
+	}
+	//保存文件
+	bool isOk = model::writeQByteArrayToFile(filePath, content);
+	if (isOk) {
+		status = true;
+		fileName = filePath;
+	}
+}
+
+void MessageContent::speechRecognition()
+{
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    connect(dataCenter, &model::DataCenter::speechRecognitionDone, this, &MessageContent::speechRecognitionDone, Qt::UniqueConnection);
+    dataCenter->speechRecognitionAsync(fileId, content);
+}
+
+void MessageContent::speechRecognitionDone(const QString& fileId, bool ok, const QString& errmsg, const QString& text)
+{
+    if (fileId != this->fileId) {
+        return;
+    }
+    if (!ok) {
+        Toast::showMessage("语音转文字失败:" + errmsg);
+        return;
+    }
+    label->setText("语音转文字]" + text);
+    this->update();
+}
+
+MessageImage::MessageImage(const QString& fileId, const QByteArray& content, bool isLeft)
+	:fileId(fileId), content(content), isLeft(isLeft)
+{
+	this->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
+	this->setStyleSheet("QPushButton{border:none;}");
+	//this->setFixedSize(200, 200);
+    image = new QPushButton(this);
+    if (content.isEmpty()) {
+		model::DataCenter* dataCenter = model::DataCenter::getInstance();
+		connect(dataCenter, &model::DataCenter::getSingleFileDone, this,&MessageImage::updateUI,Qt::UniqueConnection);
+		dataCenter->getSingleFileAsync(fileId);
+    }
+
+
+}
+
+void MessageImage::updateUI(const QString& fileId, const QByteArray& content)
+{
+	if (fileId != this->fileId) {
+		return;
+	}
+	this->content = content;
+	this->update();
+
+}
+
+void MessageImage::paintEvent(QPaintEvent* event)
+{
+	QObject* obj = this->parent();
+	if (!obj->isWidgetType()) {
+		return;
+	}
+	QWidget* parent = dynamic_cast<QWidget*> (obj);
+	int width = parent->width() * 0.55;
+	QImage display_image;
+    if (content.isEmpty()) {
+        display_image.load(":/resource/images/xiaoju.jpg");
+    }
+    else {
+		display_image.loadFromData(content);
+    }
+	int height = display_image.height() * width / display_image.width();
+    QPixmap pixmap = QPixmap::fromImage(display_image);
+	image->setIconSize(QSize(width, height));
+	image->setIcon(QIcon(pixmap));
+    //设置父元素高度
+	parent->setFixedHeight(height + 50);
+    //设置图片位置
+	if (isLeft) {
+		image->setGeometry(10, 0, width, height);
+	}
+	else {
+		image->setGeometry(parent->width() - width - 10, 0, width, height);
+	}
+	
+}
+
 
 

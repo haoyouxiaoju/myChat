@@ -34,6 +34,16 @@ private:
 
     //发送文本消息
     void sendTextMessage();
+	//发送图片消息
+	void clickSendImageBtn();
+	//发送文件消息
+	void clickSendFileBtn();
+    //开始录制语音
+    void soundRecordPressed();
+    //结束录制语音
+    void soundRecordReleased();
+    //发送语音
+    void sendSound(const QString& path);
 
     //把消息添加到消息显示区
     void addSelfMessage(model::MessageType type, const QByteArray& body, const QString& extraInfo);

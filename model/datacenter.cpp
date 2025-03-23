@@ -17,6 +17,7 @@ namespace model {
 		searchMessageResult = new QList<Message>();
 		recentMessages = new QHash<QString, QList<Message>>();
 		unreadMessageCount = new QHash<QString, int>();
+		myself = new UserInfo();
 
 		netClient.initWebSocket();
 		
@@ -251,6 +252,25 @@ namespace model {
 		}
 		return nullptr;
 	
+	}
+
+	QList<UserInfo>* DataCenter::getMemberListBySessionId(const QString& chat_session_id)
+	{
+		QList<UserInfo>& list  =(*this->memberList)[chat_session_id];
+		if (memberList == nullptr || list.isEmpty()) {
+			return nullptr;;
+		}
+		return &list;
+	}
+
+	QList<UserInfo>* DataCenter::getSearchUserResult()
+	{
+		return this->searchUserResult;
+	}
+
+	QList<Message>* DataCenter::getSearchMessageResult()
+	{
+		return this->searchMessageResult;
 	}
 
 
@@ -498,6 +518,66 @@ namespace model {
 		netClient.rejectFriendApply(loginSessionId, userId);
 	}
 
+	void DataCenter::createGroupChatSessionAsync(const QList<QString>& memberList)
+	{
+		netClient.createGroupChatSession(loginSessionId,memberList);
+	}
+
+	void DataCenter::getChatSessionMemberAsync(const QString& chat_session_id)
+	{
+		netClient.getChatSessionMember(loginSessionId, chat_session_id);
+	}
+
+	void DataCenter::searchAddFriendAsync(const QString& keyWord)
+	{
+		netClient.searchAddFriend(loginSessionId, keyWord);
+	}
+
+	void DataCenter::searchMessageAsync(const QString& keyWord)
+	{
+		netClient.searchMessage(loginSessionId,currentChatSessionId, keyWord);
+	}
+
+	void DataCenter::loginAsync(const QString& username, const QString& password)
+	{
+		netClient.userLogin(username, password);
+	}
+
+	void DataCenter::phoneLoginAsync(const QString& phone, const QString& verifycode)
+	{
+		netClient.phoneLogin(phone, verifycode,this->getVerifyCodeId());
+	}
+
+	void DataCenter::phoneRegisterAsync(const QString& phone, const QString& password, const QString& verifycode)
+	{
+		netClient.phoneRegister(phone, password, verifycode, this->getVerifyCodeId());
+	}
+
+	void DataCenter::getSingleFileAsync(const QString& fileId)
+	{
+		netClient.getSingleFile(loginSessionId,fileId);
+	}
+
+	void DataCenter::sendImageMessageAsync(const QString& chat_session_id, const QByteArray& body)
+	{
+		netClient.sendMessage(loginSessionId, chat_session_id, model::MessageType::IMAGE_TYPE, body);
+	}
+
+	void DataCenter::sendFileMessageAsync(const QString& chat_session_id, const QByteArray& body, const QString& fileName)
+	{
+		netClient.sendMessage(loginSessionId, chat_session_id,model::MessageType::FILE_TYPE, body, fileName);
+	}
+
+	void DataCenter::sendSpeechMessageAsync(const QString& chat_session_id, const QByteArray& content)
+	{
+		netClient.sendMessage(loginSessionId, chat_session_id, model::MessageType::SPEECH_TYPE,content);
+	}
+
+	void DataCenter::speechRecognitionAsync(const QString& fileId, const QByteArray& content)
+	{
+		netClient.speechRecognition(loginSessionId, fileId, content);
+	}
+
 	
 
 	void DataCenter::resetNickName(const QString& nickName)
@@ -545,6 +625,54 @@ namespace model {
 
 
 			});
+	}
+
+	void DataCenter::resetChatSessionMember(const QString& chat_session_id, std::shared_ptr<chat_im::GetChatSessionMemberRsp> member_list)
+	{
+		if (this->memberList == nullptr) {
+			this->memberList = new QHash<QString, QList<UserInfo>>();
+		}
+		QList<UserInfo>& list = (*this->memberList)[chat_session_id];
+		list.clear();
+		for (const auto& e : member_list->memberInfoList()) {
+			UserInfo info;
+			info.load(e);
+			list.push_back(info);
+		}
+	}
+
+	void DataCenter::resetSearchAddFriendList(std::shared_ptr<chat_im::FriendSearchRsp> rsp)
+	{
+		if (this->searchUserResult == nullptr) {
+			this->searchUserResult = new QList<UserInfo>();
+		}
+		this->searchUserResult->clear();
+		for (const auto& e : rsp->userInfo()) {
+			UserInfo info;
+			info.load(e);
+			this->searchUserResult->push_back(info);
+		}
+	}
+
+	void DataCenter::resetSearchMessageList(const QList<chat_im::MessageInfo>& messageList)
+	{
+		if (this->searchMessageResult == nullptr) {
+			this->searchMessageResult = new QList<Message>();
+		}
+		LOG() << "this->searchMessageResult.size() = " << this->searchMessageResult->size();
+		this->searchMessageResult->clear();
+		LOG() << "this->searchMessageResult.size() = " << this->searchMessageResult->size();
+		for (const auto& e : messageList) {
+			Message message;
+			message.load(e);
+			this->searchMessageResult->push_back(message);
+		}
+	}
+
+	void DataCenter::setLoginSessionId(const QString& loginSessionId)
+	{
+		this->loginSessionId = loginSessionId;
+		saveDataFile();
 	}
 
 }

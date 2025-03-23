@@ -19,6 +19,8 @@ public:
 	OtherUsrInfoWidget(const model::UserInfo& usrInfo,QWidget *parent = nullptr);
 	~OtherUsrInfoWidget();
 
+	void hide_sendMessageBtn();
+
 protected:
 
 private: 

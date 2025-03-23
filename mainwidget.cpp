@@ -1,6 +1,7 @@
 #include "mainwidget.h"
 #include "model/datacenter.h"
 #include <QList>
+#include "searchaddfriend.h"
 
 #include "toast.h"
 
@@ -269,7 +270,6 @@ void MainWidget::initMainWidgetSignal()
             this->minimizeWidget();
     });
 
-
     
     //最大化
 	connect(maximize_button, &QPushButton::clicked, this, [this]() {
@@ -284,7 +284,6 @@ void MainWidget::initMainWidgetSignal()
 
 		}
 		});
-
 
 
     //关闭
@@ -378,6 +377,49 @@ void MainWidget::initMainWidgetSignal()
 	connect(dataCenter, &model::DataCenter::reveiveFriendProcessReject, this, [this](const model::UserInfo& userInfo) {
 		Toast::showMessage("好友申请被拒绝");
 		});
+
+	//创建群聊请求发送结束
+	connect(dataCenter, &model::DataCenter::createGroupChatSessionDone, this, []() {
+		Toast::showMessage("创建群聊请求发送成功");
+		});
+
+	//接收到会话
+	connect(dataCenter, &model::DataCenter::receiveChatSessionDone, this, [this]() {
+		//更新会话列表
+		this->updataChatSessionList();
+		Toast::showMessage("接收到会话");
+        });
+    //搜索添加好友
+	connect(search_submit, &QPushButton::clicked, this, [this, dataCenter]() {
+	/*	QString search_content = search_input->toPlainText();
+		if (search_content.isEmpty()) {
+			Toast::showMessage("搜索内容不能为空");
+			return;
+		}
+		dataCenter->searchAddFriendAsync(search_content);*/
+		//搜索添加好友
+		const QString& search_key = search_input->toPlainText();
+		if (search_key.isEmpty()) {
+			Toast::showMessage("搜索内容不能为空");
+			return;
+		}
+		connect(dataCenter, &model::DataCenter::searchAddFriendDone, this, [this,dataCenter]() {
+            QList<model::UserInfo>* user_list = dataCenter->getSearchUserResult();
+			if (user_list == nullptr || user_list->size() == 0) {
+				Toast::showMessage("搜索添加好友失败");
+				return;
+			}
+            for (auto e : *user_list) {
+                LOG() <<"userId:" << e.userId<<",phone:"<<e.phone;
+            }
+			searchAddFriend* search_widget = new searchAddFriend(user_list, this);
+			search_widget->move(search_submit->x() + this->x(), search_submit->y() + this->y() + search_submit->height());
+			Toast::showMessage("搜索添加好友成功");
+			search_widget->show();
+			});
+		dataCenter->searchAddFriendAsync(search_key);
+		});
+
     // 
     //
     //dataCenter->getFriendListAsync()

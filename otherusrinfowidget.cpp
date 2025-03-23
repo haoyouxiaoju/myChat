@@ -87,6 +87,11 @@ OtherUsrInfoWidget::~OtherUsrInfoWidget()
 	LOG() << "close";
 }
 
+void OtherUsrInfoWidget::hide_sendMessageBtn()
+{
+	sendSession_button->hide();
+}
+
 void OtherUsrInfoWidget::clickSendMessageBtn()
 {
 	MainWidget* mainWidget = MainWidget::getInstance();

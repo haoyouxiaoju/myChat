@@ -2,11 +2,11 @@
 #include "mainwidget.h"
 
 #include "model/datacenter.h"
+#include "otherusrinfowidget.h"
 
 #include "toast.h"
 #include "debug.h"
 
-using namespace model;
 
 SessionFriendArea::SessionFriendArea(QWidget* parent)
     :QScrollArea(parent),selected_item(nullptr)
@@ -104,34 +104,20 @@ void SessionFriendArea::addItem(ItemType type,const QString& id, const QIcon &av
 
 void SessionFriendArea::addItem(ItemType type,const model::UserInfo& info)
 {
-    DataCenter* dataCenter = DataCenter::getInstance();
+  LOG() <<"userId:" << info.userId<<",phone:"<<info.phone;
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    if (type == SEARCHADDFRIENDITEM) {
+		SessionFriendItem* item = new SearchAddFriendItem(this,info);
+		container->layout()->addWidget(item);
+        return;
+    }
     this->addItem(type, info.userId, dataCenter->getIcon(info.avatar), info.nickname,"");
 }
 
 void SessionFriendArea::addItem(ItemType type, const model::ChatSessionInfo& info) {
-    switch (info.lastMessage.messageType)
-    {
-    case model::MessageType::TEXT_TYPE: {
-        this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName, QString(info.lastMessage.content));
-        break;
-    }
-    case model::MessageType::FILE_TYPE: {
-		this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName,"[文件]");
-        break;
-    }
-    case model::MessageType::IMAGE_TYPE: {
-		this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName,"[图片]");
-        break;
-    }
-    case model::MessageType::SPEECH_TYPE: {
-		this->addItem(type, info.chatSessionId, info.avatar, info.chatSessionName,"[语音]");
-        break;
-    }
-    default:
-        qCritical() <<POSITION <<"messageType 错误！messageType=" << info.lastMessage.messageType;
-        break;
-    }
-}
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    addItem(type, info.chatSessionId, info.avatar, info.chatSessionName, info.lastMessage.content);
+  }
 
 void SessionFriendArea::clickItem(int index)
 {
@@ -248,9 +234,9 @@ SessionItem::SessionItem(SessionFriendArea *owner, const QString &chatSessionId,
     :SessionFriendItem(owner,avatar,name,lastMessage),
     chatSessionId(chatSessionId)
 {
-    DataCenter* dataCenter = DataCenter::getInstance();
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
     //
-    connect(dataCenter, &DataCenter::updateLastMessage, this, &SessionItem::updateLastMessage);
+    connect(dataCenter, &model::DataCenter::updateLastMessage, this, &SessionItem::updateLastMessage);
 
     //构造时获取是否有未读消息
     int unread = dataCenter->getUnread(chatSessionId);
@@ -269,7 +255,7 @@ void SessionItem::avtion()
     static const QRegularExpression reg(R"(\[\S+\])");
     MessageLabel->setText(text.replace(reg, ""));
     // **
-    DataCenter* dataCenter = DataCenter::getInstance();
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
     dataCenter->clearUnread(chatSessionId);
 
 
@@ -283,28 +269,28 @@ void SessionItem::updateLastMessage(const QString& chatSessionId)
     if (this->chatSessionId != chatSessionId) {
         return;
     }
-    DataCenter* dataCenter = DataCenter::getInstance();
-    QList<Message>* message_list = dataCenter->getRecentMessageList(chatSessionId);
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    QList<model::Message>* message_list = dataCenter->getRecentMessageList(chatSessionId);
     if (message_list == nullptr || message_list->size() == 0) {
         return;
     }
-    const Message& lastMessage = message_list->back();
+    const model::Message& lastMessage = message_list->back();
     QString text;
     //最后一条信息提示
     switch (lastMessage.messageType) {
-    case MessageType::TEXT_TYPE: {
+    case model::MessageType::TEXT_TYPE: {
         text = lastMessage.content;
         break;
     }
-    case MessageType::FILE_TYPE: {
+    case  model::MessageType::FILE_TYPE: {
         text = "[文件]";
         break;
     }
-    case MessageType::SPEECH_TYPE:{
+    case  model::MessageType::SPEECH_TYPE:{
         text = "[语音]";
         break;
     }
-	case MessageType::IMAGE_TYPE: {
+	case  model::MessageType::IMAGE_TYPE: {
 		text = "[图片]";
         break;
 	}
@@ -377,8 +363,8 @@ FriendApplyItem::FriendApplyItem(SessionFriendArea *owner, const QString &userId
 
 void FriendApplyItem::acceptFriend()
 {
-    DataCenter* dataCenter = DataCenter::getInstance();
-    connect(dataCenter, &DataCenter::acceptFriendApplyDone, this,&FriendApplyItem::acceptFriendDone,Qt::UniqueConnection);
+     model::DataCenter* dataCenter =  model::DataCenter::getInstance();
+    connect(dataCenter, & model::DataCenter::acceptFriendApplyDone, this,&FriendApplyItem::acceptFriendDone,Qt::UniqueConnection);
 	dataCenter->acceptFriendApplyAsync(userId);
 
 }
@@ -405,8 +391,8 @@ void FriendApplyItem::acceptFriendDone(const QString& userId, const QString& rea
 }
 void FriendApplyItem::rejectFriend()
 {
-	DataCenter* dataCenter = DataCenter::getInstance();
-	connect(dataCenter, &DataCenter::rejectFriendApplyDone, this, &FriendApplyItem::acceptFriendDone, Qt::UniqueConnection);
+	 model::DataCenter* dataCenter =  model::DataCenter::getInstance();
+	connect(dataCenter, & model::DataCenter::rejectFriendApplyDone, this, &FriendApplyItem::acceptFriendDone, Qt::UniqueConnection);
 	dataCenter->rejectFriendApplyAsync(userId);
 }
 void FriendApplyItem::rejectFriendDone(const QString& userId, const QString& reason)
@@ -435,3 +421,21 @@ void FriendApplyItem::avtion()
 
 /***** *****	好友申请item		***** *****/
 /***** *****	 END		***** *****/
+
+SearchAddFriendItem::SearchAddFriendItem(SessionFriendArea* owner, const model::UserInfo& info)
+	:SessionFriendItem(owner,  model::DataCenter::getInstance()->getIcon(info.avatar), info.nickname, ""),info(info)
+{
+	layout->removeWidget(MessageLabel);
+	delete MessageLabel;
+
+}
+
+void SearchAddFriendItem::avtion()
+{
+	OtherUsrInfoWidget otherUsrInfo(info, owner);
+	otherUsrInfo.hide_sendMessageBtn();
+    QPoint globalPos = QCursor::pos();
+    otherUsrInfo.move(globalPos.x(), globalPos.y());
+    otherUsrInfo.exec();
+
+}

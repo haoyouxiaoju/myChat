@@ -17,6 +17,7 @@ public:
 	void addAvatarItem(AvatarItem* item);
 	void show_widget(); 
 private:
+	void initMember(const QString& sessionId);
 	QVBoxLayout* layout;				//主layout
 	QGridLayout* avatarTabel_Layout;	//存放avataritem的layout
 	

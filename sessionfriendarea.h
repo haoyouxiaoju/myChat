@@ -18,6 +18,7 @@ enum ItemType{
     SESSIONITEM,
     FRIENDITEM,
     FRIENDAPPLYITEM,
+    SEARCHADDFRIENDITEM,
     SESSIONFRIENDITEM,
 
 };
@@ -148,6 +149,20 @@ protected:
 
 private:
     QString userId;
+
+};
+
+class SearchAddFriendItem : public SessionFriendItem {
+    Q_OBJECT
+public:
+	SearchAddFriendItem(SessionFriendArea* owner,const model::UserInfo& info);
+
+protected:
+    void avtion() override;
+
+private:
+	model::UserInfo info;
+
 
 };
 #endif // SESSIONFRIENDAREA_H

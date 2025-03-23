@@ -9,6 +9,10 @@
 #include "user.qpb.h"
 #include "message.qpb.h"
 #include "transmit.qpb.h"
+#include "friend.qpb.h"
+#include "notify.qpb.h"
+#include "file.qpb.h"
+#include "speech.qpb.h"
 
 using namespace model;
 
@@ -76,7 +80,7 @@ void NetClient::getFriendList(const QString& login_session_id)
 	req.setSessionId(login_session_id);
 
 	QByteArray body = req.serialize(&this->serializer);
-	QNetworkReply* reply = this->sendHttpRequest("/service/user/get_friend_list", body);
+	QNetworkReply* reply = this->sendHttpRequest("/service/friend/get_friend_list", body);
 
 	connect(reply, &QNetworkReply::finished, this, [this,reply]() {
 		std::shared_ptr<chat_im::GetFriendListRsp> friend_list = this->handleHttpResponse<chat_im::GetFriendListRsp>(reply);
@@ -99,7 +103,7 @@ void NetClient::getChatSessionList(const QString& login_session_id)
 	req.setSessionId(login_session_id);
 
 	QByteArray body = req.serialize(&this->serializer);
-	QNetworkReply* reply = this->sendHttpRequest("/service/user/get_chat_session_list", body);
+	QNetworkReply* reply = this->sendHttpRequest("/service/friend/get_chat_session_list", body);
 	
 	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
 		std::shared_ptr<chat_im::GetChatSessionListRsp> session_list = this->handleHttpResponse<chat_im::GetChatSessionListRsp>(reply);
@@ -482,6 +486,230 @@ void NetClient::rejectFriendApply(const QString& loginSessionId, const QString& 
 		});
 }
 
+void NetClient::createGroupChatSession(const QString& loginSessionId, const QList<QString>& memberList)
+{
+	chat_im::ChatSessionCreateReq req;
+	req.setRequestId(makeRequestId());
+	req.setSessionId(loginSessionId);
+	req.setMemberIdList(memberList);
+	req.setChatSessionName("群聊");
+	QByteArray body = req.serialize(&serializer);
+
+	LOG() << "[创建群聊会话] requestId=" << req.requestId() << " loginSessionId=" << loginSessionId << " memberList=" << memberList;
+	QNetworkReply* reply = this->sendHttpRequest("/service/friend/create_chat_session", body);
+	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+		std::shared_ptr<chat_im::ChatSessionCreateRsp> rsp = this->handleHttpResponse<chat_im::ChatSessionCreateRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "创建群聊会话失败:" << rsp->errmsg();
+			return;
+		}
+		emit dataCenter->createGroupChatSessionDone();
+		});
+
+}
+
+void NetClient::getChatSessionMember(const QString& loginSessionId, const QString& chat_session_id)
+{
+	chat_im::GetChatSessionMemberReq req;
+	req.setRequestId(makeRequestId());
+	req.setSessionId(loginSessionId);
+	req.setChatSessionId(chat_session_id);
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[获取会话成员列表] requestId=" << req.requestId() << " loginSessionId=" << loginSessionId << " chatSessionId=" << chat_session_id;
+	QNetworkReply* reply = this->sendHttpRequest("/service/friend/get_chat_session_member", body);
+	connect(reply, &QNetworkReply::finished, this, [this, reply,chat_session_id]() {
+		std::shared_ptr<chat_im::GetChatSessionMemberRsp> rsp = this->handleHttpResponse<chat_im::GetChatSessionMemberRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "获取会话成员列表失败:" << rsp->errmsg();
+			return;
+		}
+		dataCenter->resetChatSessionMember(chat_session_id, rsp);
+		emit dataCenter->getChatSessionMemberDone(chat_session_id);
+		});
+}
+
+void NetClient::searchAddFriend(const QString& loginSessionId, const QString& keyWord)
+{
+	chat_im::FriendSearchReq req;
+	req.setRequestId(makeRequestId());
+	req.setSessionId(loginSessionId);
+	req.setSearchKey(keyWord);
+
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[搜索添加好友] requestId=" << req.requestId() << " loginSessionId=" << loginSessionId << " keyWord=" << keyWord;
+	QNetworkReply* reply = this->sendHttpRequest("/service/friend/search_friend", body);
+	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+		std::shared_ptr<chat_im::FriendSearchRsp> rsp = this->handleHttpResponse<chat_im::FriendSearchRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "搜索添加好友失败:" << rsp->errmsg();
+			return;
+		}
+		dataCenter->resetSearchAddFriendList(rsp);
+		emit dataCenter->searchAddFriendDone();
+		});
+}
+
+void NetClient::searchMessage(const QString& loginSessionId,const QString& chat_session_id, const QString& keyWord)
+{
+	chat_im::MsgSearchReq req;
+	req.setRequestId(makeRequestId());
+	req.setChatSessionId(chat_session_id);
+	req.setSessionId(loginSessionId);
+	req.setSearchKey(keyWord);
+
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[搜索历史消息] requestId=" << req.requestId() << " loginSessionId=" << loginSessionId << " chatSessionId=" << chat_session_id << " keyWord=" << keyWord;
+	QNetworkReply* reply = this->sendHttpRequest("/service/message_storage/search_history", body);
+	connect(reply, &QNetworkReply::finished, this, [this, reply, chat_session_id]() {
+		std::shared_ptr<chat_im::MsgSearchRsp> rsp = this->handleHttpResponse<chat_im::MsgSearchRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "搜索历史消息失败:" << rsp->errmsg();
+			return;
+		}
+		dataCenter->resetSearchMessageList(rsp->messageList());
+		emit dataCenter->searchMessageDone();
+		});
+}
+
+void NetClient::userLogin(const QString& username, const QString& password)
+{
+	chat_im::UserLoginReq req;
+	req.setRequestId(makeRequestId());
+	req.setUserName(username);
+	req.setPassword(password);
+
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[用户登录] requestId=" << req.requestId() << " username=" << username << " password=" << password;
+	QNetworkReply* reply = this->sendHttpRequest("/service/user/username_login", body);
+	//
+	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+		std::shared_ptr<chat_im::UserLoginRsp> rsp = this->handleHttpResponse<chat_im::UserLoginRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "用户登录失败:" << rsp->errmsg();
+			return;
+		}
+		dataCenter->setLoginSessionId(rsp->loginSessionId());
+		emit dataCenter->userLoginDone(true,"");
+		});
+
+}
+
+void NetClient::phoneLogin(const QString& phone, const QString& verifycode,const QString& verifycodeId)
+{
+	chat_im::PhoneLoginReq req;
+	req.setRequestId(makeRequestId());
+	req.setPhoneNumber(phone);
+	req.setVerifyCode(verifycode);
+	req.setVerifyCodeId(verifycodeId);
+
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[手机号登录] requestId=" << req.requestId() << " phone=" << phone << " verifycode=" << verifycode << " verifycodeId=" << verifycodeId;
+	QNetworkReply* reply = this->sendHttpRequest("/service/user/phone_login", body);
+	//
+	connect(reply, &QNetworkReply::finished, this, [this,reply]() {
+		std::shared_ptr<chat_im::PhoneLoginRsp> rsp = this->handleHttpResponse<chat_im::PhoneLoginRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "手机号登录失败:" << rsp->errmsg();
+			emit dataCenter->phoneLoginDone(false, rsp->errmsg());
+			return;
+		}
+		dataCenter->setLoginSessionId(rsp->loginSessionId());
+		emit dataCenter->phoneLoginDone(true, "");
+
+		});
+
+}
+
+void NetClient::phoneRegister(const QString& phone, const QString& password, const QString& verifycode, const QString& verifycodeId)
+{
+	chat_im::PhoneRegisterReq req;
+	req.setRequestId(makeRequestId());
+	req.setPhoneNumber(phone);
+	req.setPassword(password);
+	req.setVerifyCode(verifycode);
+	req.setVerifyCodeId(verifycodeId);
+	
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[手机号注册] requestId=" << req.requestId() << " phone=" << phone << " password=" << password << " verifycode=" << verifycode << " verifycodeId=" << verifycodeId;
+	QNetworkReply* reply = this->sendHttpRequest("/service/user/phone_register", body);
+	//
+	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+		std::shared_ptr<chat_im::PhoneRegisterRsp> rsp = this->handleHttpResponse<chat_im::PhoneRegisterRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "手机号注册失败:" << rsp->errmsg();
+			emit dataCenter->phoneRegisterDone(false, rsp->errmsg());
+			return;
+		}
+		emit dataCenter->phoneRegisterDone(true, "");
+		});
+}
+
+void NetClient::getSingleFile(const QString& loginSessionId, const QString& fileId)
+{
+	chat_im::GetSingleFileReq req;
+	req.setRequestId(makeRequestId());
+	req.setSessionId(loginSessionId);
+	req.setFileId(fileId);
+
+	QByteArray body = req.serialize(&serializer);
+	LOG() << "[获取单文件内容] requestId=" << req.requestId() << " loginSessionId=" << loginSessionId << " fileId=" << fileId;
+	QNetworkReply* reply = this->sendHttpRequest("/service/file/get_single_file", body);
+	//
+	connect(reply, &QNetworkReply::finished, this, [this, reply,fileId]() {
+		std::shared_ptr<chat_im::GetSingleFileRsp> rsp = this->handleHttpResponse<chat_im::GetSingleFileRsp>(reply);
+		if (!rsp) {
+			return;
+		}
+		if (!rsp->success()) {
+			LOG() << "获取单文件内容失败:" << rsp->errmsg();
+			return;
+		}
+		emit dataCenter->getSingleFileDone(fileId,rsp->fileData().fileContent());
+		});
+}
+
+void NetClient::speechRecognition(const QString& loginSessionId, const QString& fileId, const QByteArray& content)
+{
+	chat_im::SpeechRecognitionReq req;
+	req.setRequestId(makeRequestId());
+	req.setSessionId(loginSessionId);
+	req.setSpeechContent(content);
+
+	LOG() << "[获取语音转文字内容] requestId=" << req.requestId() << " loginSessionId=" << loginSessionId << " fileId=" << fileId;
+	QByteArray body = req.serialize(&serializer);
+	QNetworkReply* reply = this->sendHttpRequest("/service/speech/recognition", body);
+
+	connect(reply, &QNetworkReply::finished, this, [this, reply, fileId]() {
+		std::shared_ptr<chat_im::SpeechRecognitionRsp> rsp = this->handleHttpResponse<chat_im::SpeechRecognitionRsp>(reply);
+		if (!rsp || !rsp->success()) {
+			emit dataCenter->speechRecognitionDone(fileId, false, "语音识别服务失败");
+			return;
+		}
+		emit dataCenter->speechRecognitionDone(fileId, true, "", rsp->recognitionResult());
+		});
+}
+
 QString NetClient::makeRequestId()
 {
 	return QString("R"+QUuid::createUuid().toString());
@@ -573,6 +801,16 @@ void NetClient::handleWsMessage(model::Message message)
 
 void NetClient::handleWsSessionCreate(model::ChatSessionInfo chatSessionInfo)
 {
+	QList<ChatSessionInfo>* chatSessionList = dataCenter->getChatSessionList();
+	if (chatSessionList == nullptr) {
+		//还未从服务器获取会话列表,就先从网络加载
+		dataCenter->getChatSessionListAsync();
+		return;
+	}
+	//添加到会话列表
+	chatSessionList->push_front(chatSessionInfo);
+	//
+	emit dataCenter->receiveChatSessionDone();
 }
 
 void NetClient::handleWsAddFriendApplyReq(model::UserInfo userInfo)

@@ -19,7 +19,10 @@ private:
 	messageHistoryWidget(QWidget *parent=nullptr);
 	~messageHistoryWidget();
 
+	void clickSearchBtn();
+	void clickSearchBtnDone();
 	void addItem(const model::Message& message);
+	void clear();
 protected:
 	void mousePressEvent(QMouseEvent* event) override;
 

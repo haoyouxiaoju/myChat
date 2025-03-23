@@ -13,7 +13,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWidget* w = MainWidget::getInstance();
+    //MainWidget* w = MainWidget::getInstance();
     //contacts::PeopleInfo peopleinfo;
     //peopleinfo.setAge(12);
     //LOG()<<peopleinfo.age();
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     //w->setBorderColor(Qt::red);
     //w->resize(200, 200);
 
-    //LoginWidget* w = new LoginWidget();
+    LoginWidget* w = new LoginWidget();
     //LoginPhoneWidget* w = new LoginPhoneWidget();
 
     //model::DataCenter* datacebter = model::DataCenter::getInstance();

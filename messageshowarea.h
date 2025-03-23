@@ -12,6 +12,7 @@
 #include <QPaintDevice>
 #include <QPainter>
 #include <QPainterPath>
+#include <QProcess>
 #include "model/data.h"
 #include "otherusrinfowidget.h"
 
@@ -62,8 +63,17 @@ class MessageContent : public QWidget{
 public :
     MessageContent(model::MessageType type,const QString& text, const QString& fileId,const QByteArray& content,bool isLeft);
 
+	void updateUI(const QString& fileId, const QByteArray& content);
 protected:
     void paintEvent(QPaintEvent* event) override;
+	void mousePressEvent(QMouseEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
+
+private :
+	void saveFile(const QByteArray& content);
+    void speechRecognition();
+    void speechRecognitionDone(const QString& fileId, bool ok, const QString& errmsg, const QString& text = "");
+    void openFileWithSystemDefaultApp(const QString& filePath);
 
 private:
     QLabel* label;
@@ -71,7 +81,26 @@ private:
     QString fileId;
     QByteArray content;
     bool isLeft;
+    bool status;    //对于文件 用于标识是否被保存
+	QString fileName;
+	QProcess process;
 
 };
+
+class MessageImage : public QWidget {
+	Q_OBJECT
+public:
+	MessageImage(const QString& fileId,const QByteArray& content, bool isLeft);
+	void updateUI(const QString& fileId, const QByteArray& content);
+
+protected:
+	void paintEvent(QPaintEvent* event) override;
+private:
+	QPushButton* image;
+	QString fileId;
+	QByteArray content;
+	bool isLeft;
+};
+
 
 #endif // MESSAGESHOWAREA_H

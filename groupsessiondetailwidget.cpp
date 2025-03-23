@@ -1,5 +1,8 @@
 ﻿#include "groupsessiondetailwidget.h"
 #include "debug.h"
+#include "model/datacenter.h"
+
+using namespace model;
 
 GroupSessionDetailWidget::GroupSessionDetailWidget(const model::ChatSessionInfo& sessionInfo, QWidget* parent)
 	: QDialog(parent), sessionInfo(sessionInfo)
@@ -92,6 +95,11 @@ GroupSessionDetailWidget::GroupSessionDetailWidget(const model::ChatSessionInfo&
 	deleteFriendButton->setStyleSheet("QPushButton{color:red;font-size:15px;border:none;}");
 	layout->addWidget(deleteFriendButton, Qt::AlignCenter | Qt::AlignTop);
 
+	DataCenter* dataCenter = DataCenter::getInstance();
+	//添加好友
+	connect(dataCenter, &DataCenter::getChatSessionMemberDone, this, &GroupSessionDetailWidget::initMember);
+	dataCenter->getChatSessionMemberAsync(dataCenter->getCurrentChatSessionId());
+
 #if TEXT_UI
 	addAvatarItem(QIcon(":/resource/images/xiaoju.jpg"), "haoyouxiaoju");
 	addAvatarItem(QIcon(":/resource/images/plus_sign.png"), "添加");
@@ -144,6 +152,20 @@ void GroupSessionDetailWidget::show_widget()
 		});
 	this->show();
 	animation->start();
+	
+
+}
+
+void GroupSessionDetailWidget::initMember(const QString& sessionId)
+{
+	DataCenter* dataCenter = DataCenter::getInstance();
+	QList<UserInfo>* info_list = dataCenter->getMemberListBySessionId(sessionId);
+	if (info_list == nullptr) {
+		return;
+	}
+	for (auto& i : *info_list) {
+		addAvatarItem(dataCenter->getIcon(i.avatar), i.nickname);
+	}
 	
 
 }

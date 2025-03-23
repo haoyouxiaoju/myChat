@@ -20,8 +20,8 @@ class NetClient : public QObject
 {
 	Q_OBJECT
 #if TEXT_SERVER
-	const QString HTTP_URL = "http://127.0.0.1:8000";
-	const QString WEBSOCKET_URL = "ws://127.0.0.1:8001/ws";
+	const QString HTTP_URL = "http://192.168.91.128:9000";
+	const QString WEBSOCKET_URL = "ws://192.168.91.128:9001/ws";
 
 #else
 	const QString HTTP_URL = "http://127.0.0.1:8000";
@@ -66,6 +66,31 @@ public:
 	void acceptFriendApply(const QString& loginSessionId, const QString& userId);
 	//拒绝好友申请
 	void rejectFriendApply(const QString& loginSessionId, const QString& userId);
+	//创建群聊会话
+	void createGroupChatSession(const QString& loginSessionId, const QList<QString>& memberList);
+
+	//获取会话成员列表
+	void getChatSessionMember(const QString& loginSessionId, const QString& chat_session_id);
+
+	//搜索添加好友
+	void searchAddFriend(const QString& loginSessionId, const QString& keyWord);
+
+	//搜索历史消息
+	void searchMessage(const QString& loginSessionId,const QString& chat_session_id, const QString& keyWord);
+
+	//用户登录
+	void userLogin(const QString& username, const QString& password);
+
+	//手机号登录
+	void phoneLogin(const QString& phone, const QString& verifycode,const QString& verifycodeId);
+
+	//手机号注册
+	void phoneRegister(const QString& phone, const QString& password, const QString& verifycode, const QString& verifycodeId);
+
+	//获取单文件内容
+	void getSingleFile(const QString& loginSessionId, const QString& fileId);
+	//语音识别
+	void speechRecognition(const QString& loginSessionId, const QString& fileId, const QByteArray& content);
 
 	//
 	// 生成一个请求id

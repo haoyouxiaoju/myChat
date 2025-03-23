@@ -23,5 +23,6 @@
         <file>resource/images/close.png</file>
         <file>resource/images/maximize.png</file>
         <file>resource/images/minimize.png</file>
+        <file>resource/images/soundRecord.png</file>
     </qresource>
 </RCC>

@@ -3,12 +3,12 @@
 #include <QString>
 #include <QHash>
 
-#include "data.h"
 #include "../network/netclient.h"
 
 #include "user.qpb.h"
 #include "friend.qpb.h"
 #include "message.qpb.h"
+#include "data.h"
 
 
 namespace model {
@@ -41,11 +41,6 @@ namespace model {
 		void topChatSessionInfo(const ChatSessionInfo& chat_session_info);
 
 
-		const QString& getLoginSessionId();
-		const QString& getVerifyCodeId();
-		UserInfo* getFriendById(const QString& user_id);
-		UserInfo removeFromApplyList(const QString& user_id);
-		ChatSessionInfo* findChatSessionBySessionId(const QString& chat_session_id);
 
 
 		//
@@ -116,15 +111,64 @@ namespace model {
 		//拒绝好友申请
 		void rejectFriendApplyAsync(const QString& userId);
 
+		//创建群聊会话
+		void createGroupChatSessionAsync(const QList<QString>& memberList);
+
+		//获取会话成员列表
+		void getChatSessionMemberAsync(const QString& chat_session_id);
+
+		//搜索用户
+		void searchAddFriendAsync(const QString& keyWord);
+
+		//搜索历史消息
+		void searchMessageAsync(const QString& keyWord);
+
+		//用户登录
+		void loginAsync(const QString& username, const QString& password);
+
+		//手机号登录
+		void phoneLoginAsync(const QString& phone,const QString& verifycode);
+
+		//手机号注册
+		void phoneRegisterAsync(const QString& phone,const QString& password,const QString& verifycode);
+
+		//获取文件内容
+		void getSingleFileAsync(const QString& fileId);
+
+		//发送图片消息
+		void sendImageMessageAsync(const QString& chat_session_id, const QByteArray& body);
+
+		//发送文件消息
+		void sendFileMessageAsync(const QString& chat_session_id, const QByteArray& body, const QString& fileName);
+
+		//发送语音消息
+		void sendSpeechMessageAsync(const QString& chat_session_id, const QByteArray& content);
+		//语音识别
+		void speechRecognitionAsync(const QString& fileId, const QByteArray& content);
+
 
 
 	public:
+
+
 		void resetNickName(const QString& nickName);
 		void resetDescription(const QString& description);
 		void resetPhone(const QString& phone);
 		void resetVerifyCodeId(const QString& id);
 		void resetAvatar(const QByteArray& body);
 		void removeFriend(const QString& id);
+		void resetChatSessionMember(const QString& chat_session_id, std::shared_ptr<chat_im::GetChatSessionMemberRsp> member_list);
+		void resetSearchAddFriendList(std::shared_ptr<chat_im::FriendSearchRsp> searchUserResult);
+		void resetSearchMessageList(const QList<chat_im::MessageInfo>& messageList);
+		void setLoginSessionId(const QString& loginSessionId);
+		const QString& getLoginSessionId();
+		const QString& getVerifyCodeId();
+		UserInfo* getFriendById(const QString& user_id);
+		UserInfo removeFromApplyList(const QString& user_id);
+		ChatSessionInfo* findChatSessionBySessionId(const QString& chat_session_id);
+		QList<UserInfo>* getMemberListBySessionId(const QString& chat_session_id);
+		QList<UserInfo>* getSearchUserResult();
+		QList<Message>* getSearchMessageResult();
 
 
 	private:
@@ -145,7 +189,7 @@ namespace model {
 		void changeNickNameDone();		//修改用户昵称结束
 		void changeDescriptionDone();	//	修改用户签名结束
 		void changeUserPhoneDone();	//修改用户手机号结束
-		void getVerifyCodeDone();//修改用户手机号结束
+		void getVerifyCodeDone();//获取验证码结束
 		void changeAvatarDone();//修改用户头像结束
 		void deleteFriendDone(const QString& user_id);//删除好友结束
 		void clearCurrentSession();
@@ -155,6 +199,16 @@ namespace model {
 		void rejectFriendApplyDone(const QString& userId, const QString& errmsg);//拒绝好友申请结束
 		void reveiveFriendProcessAccept(const UserInfo& userInfo);//接收到接受好友申请
 		void reveiveFriendProcessReject(const UserInfo& userInfo);//接受到拒绝好友申请
+		void createGroupChatSessionDone();//创建群聊会话结束
+		void receiveChatSessionDone();//接收到会话
+		void getChatSessionMemberDone(const QString& chat_session_id);//获取会话成员列表结束
+		void searchAddFriendDone();//搜索添加好友结束
+		void searchMessageDone();//搜索历史消息结束
+		void userLoginDone(bool ok ,const QString& reason);//用户登录结束
+		void phoneLoginDone(bool ok,const QString& reason);//手机号登录结束
+		void phoneRegisterDone(bool ok, const QString& reason);//手机号注册结束
+		void getSingleFileDone(const QString& fileId,const QByteArray& data);//获取单文件内容结束
+		void speechRecognitionDone(const QString& fileId,bool success,const QString errmsg,const QString body = "");
 
 
 

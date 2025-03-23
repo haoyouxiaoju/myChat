@@ -1,6 +1,9 @@
 ﻿#include "messageeditarea.h"
 #include "messagehistorywidget.h"
 #include "mainwidget.h"
+#include <QDir>
+#include <QFileDialog>
+#include "soundrecorder.h"
 
 #include "toast.h"
 
@@ -78,23 +81,27 @@ MessageEditArea::MessageEditArea(QWidget *parent)
     mainLayout->addWidget(bottomWidget, 0);
         
 
-    tiplabel = new QLabel();
-    tiplabel->hide();
+    //tiplabel = new QLabel("录制语音中");
+    //mainLayout->addWidget(tiplabel, 0);
+    //tiplabel->hide();
 
 
-    connect(showHitstoryBtn, &QPushButton::clicked, this, [this]() {
-        messageHistoryWidget* w  = messageHistoryWidget::getMessageHistoryWidget();
-        w->show();
-
-        });
-    this->initSignalSlot();
+       this->initSignalSlot();
 
 }
 
 void MessageEditArea::initSignalSlot()
 {
     model::DataCenter* dataCenter = model::DataCenter::getInstance();
-
+	//查看历史记录
+	connect(showHitstoryBtn, &QPushButton::clicked, this, [this,dataCenter]() {
+		if (dataCenter->getCurrentChatSessionId().isEmpty()) {
+			Toast::showMessage("当前未选中聊天会话,无法查看历史记录");
+			return;
+		}
+        messageHistoryWidget* w  = messageHistoryWidget::getMessageHistoryWidget();
+        w->show();
+        });
     //处理按钮点击
     connect(sendBtn, &QPushButton::clicked, this, &MessageEditArea::sendTextMessage);
     //
@@ -103,6 +110,18 @@ void MessageEditArea::initSignalSlot()
     connect(dataCenter, &DataCenter::sendMessageFailed, this, [](const QString& reason) {
         Toast::showMessage("发送消息失败:" + reason);
         });
+	//发送图片
+    connect(sendImageBtn, &QPushButton::clicked, this,&MessageEditArea::clickSendImageBtn);
+	//发送文件
+	connect(sendFileBtn, &QPushButton::clicked, this, &MessageEditArea::clickSendFileBtn);
+    //处理语音
+    SoundRecorder* soundRecorder = SoundRecorder::getInstance();
+    //录制
+    connect(sendSoundBtn, &QPushButton::pressed, this, &MessageEditArea::soundRecordPressed);
+    connect(sendSoundBtn, &QPushButton::released, this, &MessageEditArea::soundRecordReleased);
+    //发送语音
+    connect(soundRecorder, &SoundRecorder::soundRecordDone, this, &MessageEditArea::sendSound);
+
     //处理服务端转发来的会话消息
     connect(dataCenter, &DataCenter::receiveMessageDone, this, &MessageEditArea::addOtherMessage);
 }
@@ -127,11 +146,98 @@ void MessageEditArea::sendTextMessage()
     dataCenter->sendTextMessageAsync(dataCenter->getCurrentChatSessionId(), content);
 }
 
+void MessageEditArea::clickSendImageBtn()
+{
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+
+	if (dataCenter->getCurrentChatSessionId().isEmpty()) {
+		LOG() << "当前未选中聊天会话,不发送任何消息";
+		Toast::showMessage("当前未选中聊天会话,不发送任何消息");
+		return;
+	}
+	QString filter = "Images files (*.png *.jpeg *.jpg *.bmp)";
+	QString file = QFileDialog::getOpenFileName(this, "选择图片", QDir::homePath(), filter);
+	if (file.isEmpty()) {
+		LOG() << "未选择任何图片";
+        return;
+	}
+	QByteArray image = model::localFileToQByteArray(file);
+    LOG() << "file=" << file;
+
+	//发送图片消息
+	dataCenter->sendImageMessageAsync(dataCenter->getCurrentChatSessionId(), image);
+
+}
+
+void MessageEditArea::clickSendFileBtn()
+{
+	DataCenter* dataCenter = DataCenter::getInstance();
+	//判断是否选中会话 
+	if (dataCenter->getCurrentChatSessionId().isEmpty()) {
+		LOG() << "当前未选中聊天会话,不发送任何消息";
+		Toast::showMessage("当前未选中聊天会话,不发送任何消息");
+		return;
+	}
+	QString filter = "All files (*.*)";
+	QString path = QFileDialog::getOpenFileName(this, "选择文件", QDir::homePath(), filter);
+	if (path.isEmpty()) {
+		LOG() << "未选择任何文件";
+		return;
+	}
+	QByteArray file = model::localFileToQByteArray(path);
+	QFileInfo info(path);
+	QString fileName = info.fileName();
+	//发送消息
+	dataCenter->sendFileMessageAsync(dataCenter->getCurrentChatSessionId(), file, fileName);
+}
+
+void MessageEditArea::soundRecordPressed()
+{
+    //
+    sendSoundBtn->setIcon(QIcon(":/resource/images/soundRecord.png"));
+    DataCenter* dataCenter = DataCenter::getInstance();
+    if (dataCenter->getCurrentChatSessionId().isEmpty()) {
+        LOG() << "未选择会话,不能发送语音";
+        return;
+    }
+    SoundRecorder* recorder = SoundRecorder::getInstance();
+    recorder->startRecord();
+    //
+    //edit->hide();
+    //tiplabel->show();
+}
+
+void MessageEditArea::soundRecordReleased()
+{
+    sendSoundBtn->setIcon(QIcon(":/resource/images/huatong.png"));
+    DataCenter* dataCenter = DataCenter::getInstance();
+    if (dataCenter->getCurrentChatSessionId().isEmpty()) {
+        LOG() << "未选择会话,不能发送语音";
+        return;
+    }
+    SoundRecorder* recorder = SoundRecorder::getInstance();
+    recorder->stopRecord();
+    //
+    //tiplabel->hide();
+    //edit->show();
+}
+
+void MessageEditArea::sendSound(const QString& path)
+{
+    DataCenter* dataCenter = DataCenter::getInstance();
+    //读取文件
+    QByteArray content = model::localFileToQByteArray(path);
+    //
+    dataCenter->sendSpeechMessageAsync(dataCenter->getCurrentChatSessionId(), content);
+
+}
+
 void MessageEditArea::addSelfMessage(model::MessageType type, const QByteArray& body, const QString& extraInfo)
 {
     DataCenter* dataCenter = DataCenter::getInstance();
 
     const Message& message = dataCenter->addMessage(Message::MakeMessage(type, dataCenter->getCurrentChatSessionId(), *dataCenter->getMySelf(), body, extraInfo));
+    LOG() << "type=" << type;
 
     MainWidget* mainWidget = dynamic_cast<MainWidget*>(owner);
     MessageShowArea* messageShowArea = mainWidget->getMessageShowArea();

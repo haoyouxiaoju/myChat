@@ -27,6 +27,8 @@ public:
 	void addSelectedFriend(const QString& userId, const QIcon& avatar, const QString& name);		//右边选中列表添加item
 	void deleteSelectedFriend(const QString& userId);												//删除选中列表item
 
+	QList<QString> generateMemberList();	//生成会话成员列表
+
 public slots:
 	void OK_Slot();
 	void Cannot_Slot();

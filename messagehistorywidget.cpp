@@ -1,8 +1,10 @@
 ﻿#include "messagehistorywidget.h"
 #include "model/data.h"
+#include "model/datacenter.h"
 #include <QMouseEvent>
 #include <QGraphicsDropShadowEffect>
 #include "debug.h"
+#include "toast.h"
 
 messageHistoryWidget* messageHistoryWidget::w = nullptr;
 
@@ -86,15 +88,17 @@ messageHistoryWidget::messageHistoryWidget(QWidget *parent)
     searchIcon->setIconSize(QSize(30,30));
     searchIcon->setFixedSize(30, 30);
     searchIcon->setIcon(QIcon(":/resource/images/sousuo.png"));
-    searchIcon->setEnabled(false);
+    searchIcon->setEnabled(true);
     search = new QLineEdit();
     search->setFont(font);
     search->setPlaceholderText("搜索");
     search->setFixedHeight(30);
     search->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    layout->addWidget(searchIcon,1, 0, 1, 1);
-    layout->addWidget(search, 1, 1, 1, 9);
+    layout->addWidget(search, 1, 0, 1, 9);
+    layout->addWidget(searchIcon,1, 9, 1, 1);
+
+	connect(searchIcon, &QPushButton::clicked, this,&messageHistoryWidget::clickSearchBtn);
 
     //*
     // 文件   图片 ...
@@ -152,11 +156,51 @@ messageHistoryWidget::~messageHistoryWidget()
     }
 }
 
+void messageHistoryWidget::clickSearchBtn()
+{
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    connect(dataCenter, &model::DataCenter::searchMessageDone, this, &messageHistoryWidget::clickSearchBtnDone);
+	if (search->text().isEmpty()) {
+		Toast::showMessage("搜索内容不能为空");
+		return;
+	}
+	dataCenter->searchMessageAsync(search->text());
+}
+
+void messageHistoryWidget::clickSearchBtnDone()
+{
+	model::DataCenter* dataCenter = model::DataCenter::getInstance();
+	QList<model::Message>* messageList = dataCenter->getSearchMessageResult();
+		LOG() << "messageList.size() = " << messageList->size();
+	if (messageList == nullptr || messageList->size() == 0) {
+		Toast::showMessage("搜索历史消息失败");
+		return;
+	}
+    this->clear();
+	for (int i = 0; i < messageList->size(); ++i) {
+		addItem(messageList->at(i));
+	}
+}
+
 void messageHistoryWidget::addItem(const model::Message& message)
 {
 	MessageShowItem* item = MessageShowItem::MakeMessageItem(true,message);
     message_list_widget_layout->addWidget(item);
 
+}
+
+void messageHistoryWidget::clear()
+{
+    //清空消息
+	int count = message_list_widget_layout->count();
+	for (int i = count - 1; i >= 0; --i) {
+		QWidget* widget = message_list_widget_layout->itemAt(i)->widget();
+        if (widget == nullptr) {
+            continue;
+        }
+		message_list_widget_layout->removeWidget(widget);
+		delete widget;
+	}
 }
 
 void messageHistoryWidget::mousePressEvent(QMouseEvent* event)

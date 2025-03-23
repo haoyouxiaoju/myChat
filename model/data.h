@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QFIleInfo>
+#include <QProcess>
 #include "base.qpb.h"
 
 namespace model{
@@ -67,6 +68,7 @@ static inline bool writeQByteArrayToFile(const QString& path ,const QByteArray& 
 
     return true;
 }
+
 
 /***** 用户信息 *****/
 class UserInfo{
@@ -260,6 +262,7 @@ public:
 			lastMessage.load(info.prevMessage());
         }
         if (info.hasAvatar()) {
+            LOG() << "has sessionChat icon";
             this->avatar = makeQIcon(info.avatar());
         }
         if (info.hasSingleId()) {

@@ -2,6 +2,10 @@
 #include <QPainter>
 #include "model/data.h"
 #include "model/datacenter.h"
+#include "toast.h"
+
+
+using namespace model;
 
 ChooseFriendDialog::ChooseFriendDialog(const QString& usrId,QWidget *parent)
 	: QDialog(parent),usrId(usrId)
@@ -24,6 +28,9 @@ ChooseFriendDialog::ChooseFriendDialog(const QString& usrId,QWidget *parent)
 	model::DataCenter* dataCenter = model::DataCenter::getInstance();
 	//总好友列表添加
 	QList<model::UserInfo>* friendList = dataCenter->getFriendList();
+	if (friendList == nullptr) {
+		return;
+	}
 	for (auto& friendInfo : *friendList) {
 		if (friendInfo.userId == usrId) {
 			addFriend(friendInfo.userId, dataCenter->getIcon(friendInfo.avatar), friendInfo.nickname, true);
@@ -100,15 +107,49 @@ void ChooseFriendDialog::deleteSelectedFriend(const QString& userId)
 	
 }
 
+QList<QString> ChooseFriendDialog::generateMemberList()
+{
+	QList<QString> userIdList;
+	DataCenter* dataCenter = DataCenter::getInstance();
+	UserInfo* userInfo = dataCenter->getMySelf();
+	if (userInfo == nullptr) {
+		LOG() << "获取自己信息失败";
+		return userIdList;
+	}
+	//添加自己
+	userIdList.push_back(userInfo->userId);
+	//添加选中的好友
+	QVBoxLayout* right_layout = dynamic_cast<QVBoxLayout*>(right_widget_scroll->layout());
+	int count = right_layout->count();
+	for (int i = 0; i < count; i++) {
+		QLayoutItem* item =  right_layout->itemAt(i);
+		if (item == nullptr || item->widget() == nullptr) {
+			continue;
+		}
+		userIdList.push_back(dynamic_cast<ChooseFriendItem*>(item->widget())->userId);
+	}
+
+	return userIdList;
+}
+
 // 确认键 slot
 void ChooseFriendDialog::OK_Slot() {
 
-	this->hide();
+	//生成会话成员列表
+	QList<QString> userIdList = generateMemberList();
+	if (userIdList.size() <= 2) {
+		LOG() << "选中成员数⽬不⾜ 2 个, 不能创建群聊!";
+		Toast::showMessage("至少选中俩名成员");
+		return;
+	}
+	DataCenter* dataCenter = DataCenter::getInstance();
+	dataCenter->createGroupChatSessionAsync(userIdList);
+	this->accept();
 }
 // 取消键 slot
 void ChooseFriendDialog::Cannot_Slot()
 {
-	this->hide();
+	this->reject();
 }
 
 // 初始化左边
