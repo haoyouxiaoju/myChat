@@ -262,7 +262,7 @@ public:
 			lastMessage.load(info.prevMessage());
         }
         if (info.hasAvatar()) {
-            LOG() << "has sessionChat icon";
+            LOG() <<this->chatSessionName<< "has sessionChat icon";
             this->avatar = makeQIcon(info.avatar());
         }
         if (info.hasSingleId()) {

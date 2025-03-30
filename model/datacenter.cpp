@@ -19,8 +19,10 @@ namespace model {
 		unreadMessageCount = new QHash<QString, int>();
 		myself = new UserInfo();
 
-		netClient.initWebSocket();
 		
+		//提前初始化netClient 还未登录 loginid是不存在的所以不能在此处直接初始化websocket;
+		//netClient.initWebSocket();
+
 	//保存头像,由于每次接受消息都会接受到一个头像数据,但头像数据大部分情况下都已出现过,
 	//又因重新接受导致新icon出现,从而内存占比大幅增加
 	//所以考虑用map来处理,减少icon的内存消耗
@@ -90,6 +92,11 @@ namespace model {
 
 		file.close();
 
+	}
+
+	void DataCenter::initWebsocker()
+	{
+		netClient.initWebSocket();
 	}
 
 	void DataCenter::loadDataFile()

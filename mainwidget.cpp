@@ -10,6 +10,9 @@ MainWidget::MainWidget(QWidget *parent)
     : FramelessWidget(parent)
 {
     initUi();
+    //初始化websocket连接
+    model::DataCenter* dataCenter = model::DataCenter::getInstance();
+    dataCenter->initWebsocker();
 }
 
 // 使用静态方法获取单例，
@@ -629,7 +632,7 @@ void MainWidget::updateRecentMessages(const QString& chat_session_id)
         const model::Message& message = recentList->at(i);
         //  不等于代表不是本人发送 所以在left
         bool isLeft = (message.sender.userId != dataCenter->getMySelf()->userId);
-        messageShowArea->addItem(isLeft, message);
+        messageShowArea->addFrontItem(isLeft, message);
     }
 
     //将消息展示框移动到最新一条信息

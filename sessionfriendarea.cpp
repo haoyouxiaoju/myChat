@@ -387,6 +387,8 @@ void FriendApplyItem::acceptFriendDone(const QString& userId, const QString& rea
 	}
     //释放
 	 this->deleteLater();
+     MainWidget* mw = MainWidget::getInstance();
+     mw->updataFriendApplyList();
 
 }
 void FriendApplyItem::rejectFriend()
@@ -413,6 +415,8 @@ void FriendApplyItem::rejectFriendDone(const QString& userId, const QString& rea
 	}
 	//释放
 	this->deleteLater();
+     MainWidget* mw = MainWidget::getInstance();
+     mw->updataFriendApplyList();
 }
 void FriendApplyItem::avtion()
 {

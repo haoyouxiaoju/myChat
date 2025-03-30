@@ -9,7 +9,7 @@
 
 # ignore qpb
 *.qpb.cpp
-*.qpc.h
+*.qpb.h
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

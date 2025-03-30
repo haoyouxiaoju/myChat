@@ -58,7 +58,7 @@ SoundRecorder::SoundRecorder(QObject *parent)
 	QAudioFormat outputFormat;
 	outputFormat.setSampleRate(48000);
 	outputFormat.setChannelCount(2);
-	outputFormat.setSampleFormat(QAudioFormat::Int16);
+	outputFormat.setSampleFormat(QAudioFormat::Float);
 	auto supportedFormats1 = outputDevice.supportedSampleFormats();
 	for (const auto& format : supportedFormats1) {
 		LOG() << "Supported format:"

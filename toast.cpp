@@ -12,7 +12,7 @@ Toast::Toast(const QString& text) : QDialog(nullptr) {
 	this->setWindowFlags(Qt::FramelessWindowHint);
 	this->setWindowIcon(QIcon(":/image/logo.png"));
 	this->setAttribute(Qt::WA_DeleteOnClose);
-	this->setStyleSheet("QDialog { background-color: rgb(255, 255, 255); border - radius: 10px;");
+	this->setStyleSheet("QDialog { background-color: rgb(255, 255, 255); border-radius: 10px;}");
 	// 2. 计算摆放位置
 	QScreen* screen = QApplication::primaryScreen();
 	int width = screen->size().width();

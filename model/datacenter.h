@@ -30,6 +30,9 @@ namespace model {
 		//保存必要的数据到文件
 		void saveDataFile();
 
+		//初始化websocket连接
+		void initWebsocker();
+
 		//从文件加载必要的数据
 		//如果文件和文件夹不存在则创建文件夹和文件，文件通过initDataFile()进行创建且初始化内容
 		void loadDataFile(); 

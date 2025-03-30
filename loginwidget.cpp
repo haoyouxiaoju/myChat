@@ -42,6 +42,7 @@ LoginWidget::LoginWidget(QWidget *parent)
 	password_edit->setPlaceholderText("输入密码");
 	password_edit->setTextMargins(10, 0, 0, 0);
 	password_edit->setFixedSize(320, 45);
+	password_edit->setEchoMode(QLineEdit::EchoMode::Password);
 
 	layout->addWidget(password_edit, 3, 0, 1, 10);
 
