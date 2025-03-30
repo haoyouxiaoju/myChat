@@ -12,9 +12,8 @@
 
 登录界面:(一共只有用户名登录\手机验证码登录\手机注册)
 
-<img src="D:\myfiles\code\qt\myChat\assets\image-20250330090902403.png" alt="image-20250330090902403" style="zoom: 80%;" />
+![image-20250330090902403](./assets/image-20250330090902403.png)
 
 主界面
 
-![image-20250330093804026](D:\myfiles\code\qt\myChat\assets\image-20250330093804026.png)
-
+![image-20250330093804026](./assets/image-20250330093804026.png)
